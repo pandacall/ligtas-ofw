@@ -1,0 +1,218 @@
+{
+  "_readme": "LLM eval fixture set for the job-post analyzer. Each case: raw post text (realistic Taglish, synthetic — no real agency names among scams), expected extraction fields, expected red flags, expected post-level verdict (registry lookup verdict is layered separately). Run in CI on any prompt change. Add real-world cases from DMW advisories over time.",
+  "scam": [
+    {
+      "id": "scam-01-upfront-fee",
+      "text": "HIRING!! Factory workers for JAPAN 🇯🇵 Salary ¥300,000/month!! No experience needed, no age limit! Processing fee lang na ₱15,000 para sa medical at training. Slots limited!! DM na for reservation. GCash accepted.",
+      "expect": {
+        "position": "factory worker",
+        "destination_country": "Japan",
+        "salary": "¥300,000/month",
+        "fees_mentioned": true,
+        "red_flags": ["upfront_fee", "salary_anomaly", "no_agency_identified", "urgency_pressure", "informal_payment_channel"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-02-tourist-visa",
+      "text": "Direct hire po sa Dubai, waitress position, AED 2500/month + tips + free accommodation. Tourist visa muna kayo tapos i-convert na lang po pagdating. Walang placement fee, salary deduction na lang for 3 months. Contact Ms. Jenny on WhatsApp +971-XX-XXX.",
+      "expect": {
+        "position": "waitress",
+        "destination_country": "UAE",
+        "visa_type_mentioned": "tourist",
+        "red_flags": ["tourist_visa_deployment", "salary_deduction_scheme", "whatsapp_only_contact", "direct_hire_claim", "no_agency_identified"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-03-scam-farm-corridor",
+      "text": "URGENT HIRING: Customer Service Representatives for CAMBODIA. Basic English lang kailangan! $1,000-$1,500/month, free flight, free visa, free food & lodging. Online gaming company. 18-35 years old. Send CV via Telegram @jobsasia_recruit. Departure next week!",
+      "expect": {
+        "position": "customer service representative",
+        "destination_country": "Cambodia",
+        "red_flags": ["trafficking_corridor_destination", "vague_online_role", "telegram_only_contact", "urgency_pressure", "too_good_package", "no_agency_identified"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-04-fake-license-format",
+      "text": "Legit agency po kami! Licensed by DMW (License No. DMW-2026-ABC-99999-XYZ). Hiring caregivers for Canada, CAD $25/hour. Application fee ₱5,000 non-refundable. Office: online lang muna, magme-meet tayo sa coffee shop for requirements.",
+      "expect": {
+        "license_no_claimed": "DMW-2026-ABC-99999-XYZ",
+        "position": "caregiver",
+        "destination_country": "Canada",
+        "red_flags": ["invalid_license_format", "upfront_fee", "no_physical_office", "meetup_offsite"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-05-poland-factory",
+      "text": "POLAND FACTORY WORKERS!! 100 slots!! €1,800/month guaranteed overtime. Walang edad limit, kahit walang passport pwede — kami na bahala. Downpayment ₱25,000, balance salary deduction. Legit po ito, may kakilala kami sa embassy.",
+      "expect": {
+        "position": "factory worker",
+        "destination_country": "Poland",
+        "red_flags": ["upfront_fee", "salary_deduction_scheme", "no_passport_needed_claim", "insider_connection_claim", "no_agency_identified"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-06-au-pair",
+      "text": "Au pair sa Denmark, ₱90,000/month!! Ako po ay nakapag-abroad na, tutulungan ko kayo. Send ₱3,500 for document processing sa GCash number ko. May group chat kami ng mga successful applicants, add ko kayo after payment.",
+      "expect": {
+        "position": "au pair",
+        "destination_country": "Denmark",
+        "red_flags": ["individual_recruiter_not_agency", "upfront_fee", "informal_payment_channel", "pay_before_info"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-07-seaman-book",
+      "text": "SEAFARERS WANTED — cruise ship USA, $2,800/month, kahit walang experience o seaman's book, kami mag-aayos ng documents. Interview via Messenger video call lang. Reservation fee $100 through Western Union para ma-hold ang slot mo.",
+      "expect": {
+        "position": "seafarer",
+        "destination_country": "USA",
+        "red_flags": ["upfront_fee", "no_credentials_needed_claim", "chat_only_interview", "informal_payment_channel", "no_agency_identified"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-08-name-dropping",
+      "text": "Hiring hotel staff for Qatar under ABC International Manpower Services (DMW licensed daw po sabi ng contact ko). Direct kayo makakausap ng owner. ₱8,000 for medical schedule tapos may briefing na. Room attendant QAR 1,600 + OT. Hurry, until Friday lang!",
+      "expect": {
+        "agency_name": "ABC International Manpower Services",
+        "position": "room attendant",
+        "destination_country": "Qatar",
+        "red_flags": ["upfront_fee", "secondhand_license_claim", "urgency_pressure"],
+        "verdict": "HIGH_RISK",
+        "note": "agency name present — registry lookup layer decides if it exists; post-level flags alone already HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-09-myanmar-crypto",
+      "text": "IT support / encoder needed in Myanmar-Thailand border area, $1,200/month cash. Typing skills lang! Free everything. Kaya mo yan kahit fresh grad. PM for details, sasabihin namin travel route (via Bangkok). Passport lang dala mo.",
+      "expect": {
+        "destination_country": "Myanmar",
+        "red_flags": ["trafficking_corridor_destination", "vague_online_role", "irregular_travel_route", "cash_salary", "no_agency_identified"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-10-loan-tieup",
+      "text": "Caregiver Israel — may partner kaming lending company para sa placement fee mo (₱120,000, installment). Sign lang ng promissory note at ATM card as collateral. Salary $1,500/month. Legit agency po, luma na kami sa industry.",
+      "expect": {
+        "position": "caregiver",
+        "destination_country": "Israel",
+        "red_flags": ["excessive_placement_fee", "atm_card_collateral", "loan_tieup", "no_agency_identified", "no_license_cited"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-11-visa-assist-only",
+      "text": "NOT A RECRUITMENT AGENCY po kami, visa assistance lang! Canada working visa 100% approval, ₱180,000 package inclusive na lahat. May mga na-deploy na kami, check niyo testimonials sa page namin. Message for free assessment!",
+      "expect": {
+        "destination_country": "Canada",
+        "red_flags": ["visa_assistance_disguise", "guaranteed_approval_claim", "excessive_fee", "testimonial_bait"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-12-expired-reference",
+      "text": "Hiring domestic helpers for Hong Kong under license POEA-000-LB-000000-R. HK$4,870/month. Training fee ₱12,000 kasama na ang TESDA certificate (kami na bahala kahit hindi ka pumasok sa training).",
+      "expect": {
+        "license_no_claimed": "POEA-000-LB-000000-R",
+        "position": "domestic helper",
+        "destination_country": "Hong Kong",
+        "red_flags": ["upfront_fee", "fake_certificate_offer", "suspicious_license_number"],
+        "verdict": "HIGH_RISK",
+        "note": "domestic workers must be no-placement-fee; any fee = violation"
+      }
+    },
+    {
+      "id": "scam-13-social-proof-flood",
+      "text": "CONGRATS sa 47 deployed namin this month!! 🎉🎉 (photos of airport send-offs) Korea factory E-9 visa, ₩2.1M/month. Slots for December batch open na. Reserve with ₱10,000 (deductible sa total fee na ₱250,000). Legit to, may TIN at business permit kami.",
+      "expect": {
+        "destination_country": "South Korea",
+        "red_flags": ["upfront_fee", "excessive_placement_fee", "business_permit_as_license_claim", "social_proof_flood"],
+        "verdict": "HIGH_RISK",
+        "note": "Korea E-9 goes through government-to-government EPS only — no private agency can deploy; encode as deterministic rule"
+      }
+    },
+    {
+      "id": "scam-14-model-talent",
+      "text": "Talent scouts looking for models/entertainers for Japan clubs, ¥400,000/month, 18-25 female only. No talent visa needed daw, may ibang route kami. Audition sa private residence sa QC this Saturday. Bring 2x2 photos and ₱2,000 audition fee.",
+      "expect": {
+        "destination_country": "Japan",
+        "red_flags": ["entertainer_visa_bypass", "private_residence_meeting", "upfront_fee", "trafficking_risk_profile", "no_agency_identified"],
+        "verdict": "HIGH_RISK"
+      }
+    },
+    {
+      "id": "scam-15-legit-name-hijack",
+      "text": "OFFICIAL POST from [REAL-AGENCY-NAME] — hiring nurses for UK, £2,400/month. Note: bagong Facebook page po ito, yung luma ay na-hack. Requirements fee ₱7,500 sa bagong GCash ng liaison namin si Sir Mark 09XX-XXX-XXXX. Wag na po tumawag sa landline, busy lagi.",
+      "expect": {
+        "agency_name": "[REAL-AGENCY-NAME]",
+        "position": "nurse",
+        "destination_country": "UK",
+        "red_flags": ["page_hijack_pattern", "upfront_fee", "informal_payment_channel", "avoid_official_contact_instruction"],
+        "verdict": "HIGH_RISK",
+        "note": "Critical case: agency EXISTS and is VALID in registry, but the post is an impersonation. Post-level flags must override the registry ✅. Verdict = worst-of rule."
+      }
+    }
+  ],
+  "legit": [
+    {
+      "id": "legit-01-standard",
+      "text": "JOB ORDER: Household Service Workers for Saudi Arabia. Zero placement fee po (as per policy for HSWs). Salary SR 1,500/month. Apply personally at our office: Unit 502, ___ Building, Ermita, Manila, Mon-Fri 8AM-5PM. Bring passport, PEOS certificate. XYZ International Placement Agency Inc., DMW License No. DMW-072-LB-09262023-UL (validity until 2027).",
+      "expect": {
+        "agency_name": "XYZ International Placement Agency Inc.",
+        "license_no_claimed": "DMW-072-LB-09262023-UL",
+        "position": "household service worker",
+        "destination_country": "Saudi Arabia",
+        "red_flags": [],
+        "verdict": "PASS_TO_REGISTRY",
+        "note": "valid license format, physical office, no fees, PEOS mentioned — final verdict depends on registry lookup"
+      }
+    },
+    {
+      "id": "legit-02-seabased",
+      "text": "Now hiring: Able Seaman for bulk carrier, 9-month contract, USD 780/month basic + OT per CBA. Principal: ___ Shipping Co. Ltd. Apply at our Intramuros office with SIRB, COCs, and updated SRC. ABC Crew Management Phils., POEA-045-SB-112119-R. Walk-in applicants processed Tue/Thu.",
+      "expect": {
+        "license_no_claimed": "POEA-045-SB-112119-R",
+        "position": "able seaman",
+        "red_flags": [],
+        "verdict": "PASS_TO_REGISTRY"
+      }
+    },
+    {
+      "id": "legit-03-modest-salary",
+      "text": "Factory operators for Taiwan (electronics). NT$28,590/month basic per Taiwan labor standards. Placement fee per DMW schedule, receipts issued. Requirements: passport, NBI, medical at DOH-accredited clinic. Interview at our Makati office next week — bring printed resume. DEF Manpower Services Inc., DMW-101-LB-03152024-UL.",
+      "expect": {
+        "destination_country": "Taiwan",
+        "salary": "NT$28,590/month",
+        "red_flags": [],
+        "verdict": "PASS_TO_REGISTRY",
+        "note": "realistic salary matching Taiwan's actual minimum, official fee schedule cited, receipts, accredited clinic"
+      }
+    },
+    {
+      "id": "legit-04-no-salary-hype",
+      "text": "URGENT: 10 welders (6G) for Bahrain, BD 220/month + food allowance. Must have NCII and 2 yrs experience. Final interview with employer on Feb 3 at DMW-registered office in Malate. GHI International Services, license DMW-033-LB-07182023-UL. No fees collected until job order confirmed; placement fee not to exceed one month salary per POEA rules.",
+      "expect": {
+        "position": "welder",
+        "destination_country": "Bahrain",
+        "red_flags": [],
+        "verdict": "PASS_TO_REGISTRY",
+        "note": "'URGENT' alone is not a red flag when everything else checks out — urgency must combine with fees/anonymity to flag"
+      }
+    },
+    {
+      "id": "legit-05-info-only",
+      "text": "PSA sa mga kababayan: bago mag-apply abroad, i-verify muna ang agency sa DMW website. Punta sa dmw.gov.ph > Licensed Recruitment Agencies. Wag magbayad ng kahit ano bago makita ang job order. Share niyo po ito.",
+      "expect": {
+        "red_flags": [],
+        "verdict": "NOT_A_JOB_POST",
+        "note": "analyzer must recognize non-job-post content and say so, not force a verdict"
+      }
+    }
+  ]
+}
