@@ -9,10 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What LigtasOFW does
 
 Verifies Philippine recruitment agencies against the DMW's licensed-agency registry and scans overseas job posts (usually Taglish) for illegal-recruitment red flags. Two surfaces:
-- **Agency check** — name or license-number lookup against a nightly-synced copy of DMW public data.
-- **Job-post scan** — paste text/screenshot → LLM extracts claims → deterministic engine issues the verdict.
+- **Agency check** — **name-only** lookup against a nightly-synced copy of DMW public data (the DMW API exposes no license numbers — ADR-0001; a claimed license number is format-validated only, never a lookup key).
+- **Job-post scan** — paste text/screenshot → vision LLM extracts claims (no separate OCR stage — ADR-0003) → deterministic engine issues the verdict.
 
-Intended stack (from `starter/README-draft.md`): Next.js · TypeScript · Postgres/Drizzle (`pg_trgm` fuzzy search) · Playwright (data sync) · Anthropic API · GitHub Actions (nightly sync + fixture evals in CI).
+Stack: Next.js · TypeScript · Postgres/Drizzle (`pg_trgm` fuzzy search) · OpenRouter open-weights vision LLM (extraction — ADR-0002/0003) · Playwright (endpoint *discovery* only; sync itself is plain fetch) · GitHub Actions (nightly sync + fixture evals in CI).
+
+**`CONTEXT.md` is the project glossary and `docs/adr/` holds the accepted decisions — both are authoritative; use their vocabulary exactly and don't contradict an accepted ADR.**
 
 ## Core architecture — the non-negotiable invariants
 
@@ -55,9 +57,9 @@ npx tsx starter/phase0-capture.ts   # writes to phase0-findings/
 
 - `starter/fixtures-posts.json` is the **LLM eval set** — run it in CI on any prompt/extraction change. Scams use synthetic names only (no real agency defamed). Add real cases from DMW advisories over time.
 - `starter/verdict-cases.md` is the **deterministic test matrix** — registry-lookup cases (R1–R16) and post-scoring cases (P1–P7). Implement the verdict engine table-driven against these.
-- Few-shot examples belong in the extraction prompt **only if** Haiku's zero-shot accuracy on the fixture set is <90% — measure first.
+- Few-shot examples belong in the extraction prompt **only if** the default model's zero-shot accuracy on the fixture set is <90% — measure first. The metric is verdict-level (extraction → real verdict engine → compare post verdict), defined in `fixtures-posts.json` `_readme`.
 - The result footer (freshness line + official DMW verify link + hotline) is required on every result; snapshot-test it.
 
-## Anthropic usage
+## Extractor usage (ADR-0002 / ADR-0003)
 
-Extraction uses a tool-call with `tool_choice` forcing `record_extraction`, schema = `zodToJsonSchema(Extraction)`, on a Haiku-class model. Validate with `Extraction.safeParse`. See the call sketch at the bottom of `starter/extraction.ts`.
+Extraction uses an **OpenAI-compatible chat call** (provider/model/base URL are env config, never code): `response_format: json_schema` with `zodToJsonSchema(Extraction)` (on OpenRouter set `require_parameters: true`), vision-capable input (pasted text or screenshot — no OCR stage). Default model v1: `google/gemma-4-31b-it:free`; paid fallback Qwen2.5-VL via env var. Validate with `Extraction.safeParse`; for pasted text, drop any flag whose `evidence_quote` isn't a substring of the input. See the call sketch at the bottom of `starter/extraction.ts`.

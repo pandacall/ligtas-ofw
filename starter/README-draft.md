@@ -8,7 +8,7 @@
 
 ## What it does
 
-- 🔎 **Agency check** — type a name or license number → license status (Valid / Suspended / Cancelled / Banned), validity dates, address, and approved job orders, synced nightly from DMW public data
+- 🔎 **Agency check** — type an agency name → license status (Valid / Suspended / Cancelled / Banned), validity dates, address, and approved job orders, synced nightly from DMW public data (license numbers get a format check — the DMW's public data doesn't include them, so always verify the number itself on the official site)
 - 📄 **Job-post scan** — paste text or a screenshot of a Facebook/TikTok job offer → AI extracts the claims, a deterministic rules engine checks them against the registry and 30+ illegal-recruitment patterns (upfront fees, tourist-visa deployment, trafficking-corridor destinations, license-format forgery…)
 - 🧾 **Every result** shows its evidence, data freshness, and a link to verify on the official DMW site
 
@@ -17,14 +17,14 @@
 ```
 DMW SPA API + advisory PDFs + workabroad.ph  ──nightly sync──▶  Postgres (pg_trgm fuzzy search)
                                                                       │
-paste/screenshot ──▶ Claude (extraction only, Zod-validated) ──▶ deterministic verdict engine ──▶ ✅/⚠️/🚨 + reasons
+paste/screenshot ──▶ open-weights vision LLM (extraction only, Zod-validated) ──▶ deterministic verdict engine ──▶ ✅/⚠️/🚨 + reasons
 ```
 
 Design principles: **deterministic first** (the LLM never issues verdicts, only extracts), **cache is the product** (user queries never hit government servers), **evidence or it didn't happen** (every flag quotes the post verbatim).
 
 ## Stack
 
-Next.js · TypeScript · Postgres/Drizzle · Playwright (data sync) · Anthropic API · GitHub Actions (nightly sync + fixture-based LLM evals in CI)
+Next.js · TypeScript · Postgres/Drizzle · OpenRouter (open-weights vision LLM) · Playwright (endpoint discovery) · GitHub Actions (nightly sync + fixture-based LLM evals in CI)
 
 ## ⚠️ Disclaimer
 

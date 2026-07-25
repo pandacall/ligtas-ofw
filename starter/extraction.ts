@@ -86,17 +86,22 @@ Rules of extraction:
 Return JSON matching the provided schema exactly.`;
 
 // Few-shot examples: use fixtures scam-01, scam-15 (impersonation), legit-04 (URGENT but clean),
-// legit-05 (not a job post). Keep few-shots in the prompt ONLY if haiku's zero-shot accuracy
-// on the fixture set is <90%; measure first.
+// legit-05 (not a job post). Keep few-shots in the prompt ONLY if the default model's zero-shot
+// accuracy on the fixture set is <90% (verdict-level metric, see fixtures _readme); measure first.
 
-// ---------- Anthropic call sketch ----------
-// const res = await anthropic.messages.create({
-//   model: "claude-haiku-latest",
-//   max_tokens: 2000,
-//   system: EXTRACTION_SYSTEM_PROMPT,
-//   messages: [{ role: "user", content: postTextOrImageBlocks }],
-//   tools: [{ name: "record_extraction", input_schema: zodToJsonSchema(Extraction) }],
-//   tool_choice: { type: "tool", name: "record_extraction" },
+// ---------- Extractor call sketch (OpenAI-compatible — ADR-0002 / ADR-0003) ----------
+// Provider/model are env config: baseURL=https://openrouter.ai/api/v1, apiKey=EXTRACTOR_API_KEY,
+// model=EXTRACTOR_MODEL (v1 default: google/gemma-4-31b-it:free; paid fallback: qwen2.5-vl-72b).
+// const res = await openai.chat.completions.create({
+//   model: process.env.EXTRACTOR_MODEL,
+//   messages: [
+//     { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+//     { role: "user", content: textOrImageParts },  // pasted text OR image_url — no OCR stage
+//   ],
+//   response_format: { type: "json_schema", json_schema:
+//     { name: "record_extraction", strict: true, schema: zodToJsonSchema(Extraction) } },
+//   // OpenRouter: provider: { require_parameters: true } — only route to backends honoring the schema
 // });
 // Validate with Extraction.safeParse; on failure retry once with the error appended; then degrade
-// to { analyzable: false } — NEVER fabricate a verdict.
+// to { analyzable: false } — NEVER fabricate a verdict. For pasted text, drop any red flag whose
+// evidence_quote is not a substring of the input (whitespace-normalized) — ADR-0003.
