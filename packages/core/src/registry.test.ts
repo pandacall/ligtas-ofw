@@ -94,7 +94,7 @@ describe("checkAgency — verdict-cases.md registry cases", () => {
   });
 });
 
-describe("checkAgency — exact-normalized matching only (fuzzy is issue #4)", () => {
+describe("checkAgency — exact-normalized matching", () => {
   it("matches despite case/punctuation differences (normalization, not fuzzy)", () => {
     const agency = baseAgencyRow();
     const result = checkAgency(
@@ -105,10 +105,77 @@ describe("checkAgency — exact-normalized matching only (fuzzy is issue #4)", (
     expect(result).toMatchObject({ kind: "matched", verdict: "VERIFIED" });
   });
 
-  it("a near-miss name (typo/abbreviation) does not fuzzy-match => not_found", () => {
+  it("exact match wins even when another agency is also fuzzy-plausible", () => {
+    const exact = baseAgencyRow();
+    const fuzzyDistraction = baseAgencyRow({ name: "XYZ Intl Placement Agency" });
+    const result = checkAgency(
+      exact.name,
+      { agencies: [exact, fuzzyDistraction], syncedAt: SYNCED_AT },
+      NOW,
+    );
+    expect(result).toMatchObject({ kind: "matched", verdict: "VERIFIED" });
+    if (result.kind === "matched") {
+      expect(result.agency.name).toBe(exact.name);
+    }
+  });
+});
+
+describe("checkAgency — fuzzy matching (issue #4, pg_trgm-modeled trigram similarity)", () => {
+  it("R4: a close abbreviation (sim >= 0.55) auto-matches and names the canonical agency", () => {
     const agency = baseAgencyRow();
     const result = checkAgency("XYZ Intl Placement", { agencies: [agency], syncedAt: SYNCED_AT }, NOW);
-    expect(result).toMatchObject({ kind: "not_found" });
+    expect(result).toMatchObject({ kind: "matched", verdict: "VERIFIED" });
+    if (result.kind === "matched") {
+      expect(result.reasons[0]).toContain("matched to:");
+      expect(result.reasons[0]).toContain(agency.name);
+    }
+  });
+
+  it("R5: a sparser partial name (0.4 <= sim < 0.55) returns an ambiguous did-you-mean, no auto-match", () => {
+    const agency = baseAgencyRow();
+    const result = checkAgency("XYZ Placement", { agencies: [agency], syncedAt: SYNCED_AT }, NOW);
+    expect(result).toMatchObject({ kind: "ambiguous", verdict: "CAUTION" });
+    if (result.kind === "ambiguous") {
+      expect(result.candidates.map((c) => c.name)).toContain(agency.name);
+    }
+  });
+
+  it("R6: an unrelated name (sim < 0.4) still returns not_found, not a did-you-mean", () => {
+    const agency = baseAgencyRow();
+    const result = checkAgency("Totally Unknown Agency", { agencies: [agency], syncedAt: SYNCED_AT }, NOW);
+    expect(result).toMatchObject({ kind: "not_found", verdict: "HIGH_RISK" });
+  });
+
+  it("R16: two branch offices both scoring >= 0.55 are shown together, never auto-picked", () => {
+    const makati = baseAgencyRow({ name: "ABC Manpower Services - Makati Branch" });
+    const cebu = baseAgencyRow({ name: "ABC Manpower Services - Cebu Branch" });
+    const result = checkAgency(
+      "ABC Manpower Services",
+      { agencies: [makati, cebu], syncedAt: SYNCED_AT },
+      NOW,
+    );
+    expect(result).toMatchObject({ kind: "ambiguous", verdict: "CAUTION" });
+    if (result.kind === "ambiguous") {
+      expect(result.candidates).toHaveLength(2);
+      expect(result.candidates.map((c) => c.name).sort()).toEqual([cebu.name, makati.name].sort());
+    }
+  });
+
+  it("caps the did-you-mean list at the top 3 candidates by similarity", () => {
+    // All five score in [0.4, 0.55) against "Star Manpower" — none reach the 0.55 auto-match
+    // bar, so this exercises the did-you-mean cap rather than the R16 ambiguous-strong-matches path.
+    const agencies = [
+      baseAgencyRow({ name: "Star Manpower and General Services Corporation" }),
+      baseAgencyRow({ name: "Starlight Manpower Resources Incorporated" }),
+      baseAgencyRow({ name: "All Star Manpower Solutions Company" }),
+      baseAgencyRow({ name: "Star Fleet Manpower Overseas Corporation" }),
+      baseAgencyRow({ name: "Northern Star Manpower Development Inc" }),
+    ];
+    const result = checkAgency("Star Manpower", { agencies, syncedAt: SYNCED_AT }, NOW);
+    expect(result).toMatchObject({ kind: "ambiguous", verdict: "CAUTION" });
+    if (result.kind === "ambiguous") {
+      expect(result.candidates.length).toBe(3);
+    }
   });
 });
 

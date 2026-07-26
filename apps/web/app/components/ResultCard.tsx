@@ -29,6 +29,25 @@ export function ResultCard({ result }: { result: RegistryVerdictResult }) {
     );
   }
 
+  if (result.kind === "ambiguous") {
+    return (
+      <section>
+        <h2>{VERDICT_LABEL[result.verdict]}</h2>
+        <ul>
+          {result.reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+        <ul>
+          {result.candidates.map((candidate) => (
+            <li key={candidate.id}>{candidate.name}</li>
+          ))}
+        </ul>
+        <ResultFooter dataAsOf={null} syncedAt={result.syncedAt} showReportBlock={showReportBlock} />
+      </section>
+    );
+  }
+
   const { agency } = result;
   return (
     <section>

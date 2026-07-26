@@ -51,6 +51,89 @@ describe("ResultCard", () => {
     expect(html).not.toContain("Paano mag-report");
   });
 
+  it("R4-style fuzzy auto-match: renders 'matched to: <canonical>' and full agency details", () => {
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "VERIFIED",
+      reasons: ["matched to: XYZ International Placement Agency, Inc."],
+      syncedAt: SYNCED_AT,
+      agency: {
+        id: 1,
+        name: "XYZ International Placement Agency, Inc.",
+        normalizedName: "xyz international placement agency inc",
+        classification: "Private Employment Agency",
+        licenseStatus: "Valid License",
+        licenseStatusDate: new Date("2024-01-15T00:00:00.000Z"),
+        licenseExpirationDate: new Date("2030-01-15T00:00:00.000Z"),
+        isValid: true,
+        representative: "Maria Santos",
+        address: "Unit 501, ABC Business Center",
+        municipalityProvince: "Makati",
+        cityProvince: "Metro Manila",
+        contactNumber: "(02) 8888-1234",
+        email: "info@example.ph",
+        dataAsOf: new Date("2026-07-14T05:00:00.000Z"),
+      },
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("VERIFIED");
+    expect(html).toContain("matched to: XYZ International Placement Agency, Inc.");
+    expect(html).toContain("Valid License");
+    expect(html).not.toContain("Paano mag-report");
+  });
+
+  it("R5/R16-style ambiguous: renders CAUTION, both candidates, no license details, no report block", () => {
+    const result: RegistryVerdictResult = {
+      kind: "ambiguous",
+      verdict: "CAUTION",
+      reasons: ['multiple close matches for "ABC Manpower Services" — did you mean one of these?'],
+      syncedAt: SYNCED_AT,
+      candidates: [
+        {
+          id: 1,
+          name: "ABC Manpower Services - Makati Branch",
+          normalizedName: "abc manpower services makati branch",
+          classification: "Private Employment Agency",
+          licenseStatus: "Valid License",
+          licenseStatusDate: new Date("2024-01-15T00:00:00.000Z"),
+          licenseExpirationDate: new Date("2030-01-15T00:00:00.000Z"),
+          isValid: true,
+          representative: null,
+          address: null,
+          municipalityProvince: null,
+          cityProvince: null,
+          contactNumber: null,
+          email: null,
+          dataAsOf: new Date("2026-07-14T05:00:00.000Z"),
+        },
+        {
+          id: 2,
+          name: "ABC Manpower Services - Cebu Branch",
+          normalizedName: "abc manpower services cebu branch",
+          classification: "Private Employment Agency",
+          licenseStatus: "Valid License",
+          licenseStatusDate: new Date("2024-01-15T00:00:00.000Z"),
+          licenseExpirationDate: new Date("2030-01-15T00:00:00.000Z"),
+          isValid: true,
+          representative: null,
+          address: null,
+          municipalityProvince: null,
+          cityProvince: null,
+          contactNumber: null,
+          email: null,
+          dataAsOf: new Date("2026-07-14T05:00:00.000Z"),
+        },
+      ],
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("CAUTION");
+    expect(html).toContain("ABC Manpower Services - Makati Branch");
+    expect(html).toContain("ABC Manpower Services - Cebu Branch");
+    expect(html).toContain("did you mean");
+    expect(html).not.toContain("License Status");
+    expect(html).not.toContain("Paano mag-report");
+  });
+
   it("matched + HIGH_RISK (e.g. R8 Cancelled): shows the report block", () => {
     const result: RegistryVerdictResult = {
       kind: "matched",

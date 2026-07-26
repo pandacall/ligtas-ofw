@@ -4,7 +4,7 @@
  * for how the two are combined (worst-of).
  */
 import type { Agency } from "@ligtas-ofw/db";
-import { loadRegistrySnapshot, normalizeAgencyName, toAgencyRows } from "@ligtas-ofw/db";
+import { loadRegistrySnapshot, normalizeAgencyName, toAgencyRows, trigramSimilarity } from "@ligtas-ofw/db";
 import type { Verdict } from "./verdict";
 import { worstVerdict } from "./verdict";
 
@@ -15,7 +15,19 @@ export type RegistryState = {
 
 export type RegistryVerdictResult =
   | { kind: "not_found"; verdict: "HIGH_RISK"; reasons: string[]; syncedAt: Date }
+  | { kind: "ambiguous"; verdict: "CAUTION"; reasons: string[]; candidates: Agency[]; syncedAt: Date }
   | { kind: "matched"; verdict: Verdict; reasons: string[]; agency: Agency; syncedAt: Date };
+
+// Fuzzy-match thresholds (data, not code) — starter/verdict-cases.md R4/R5/R6/R16, decided
+// 2026-07-27. Trigram similarity modeled on pg_trgm; see @ligtas-ofw/db's trigramSimilarity —
+// it deliberately uses a Dice coefficient rather than pg_trgm's literal Jaccard formula (see
+// that module's docstring for why). These two numbers were calibrated against that Dice
+// formula, not against real pg_trgm. When a live DB lands (#6/#12) and this swaps to a real
+// SQL `similarity()` query, re-run R4/R5/R6/R16 against the live Jaccard-based scores first —
+// they will likely differ and these thresholds may need to move.
+const FUZZY_MATCH_THRESHOLD = 0.55; // >= this: auto-match, "matched to: <canonical>"
+const FUZZY_SUGGEST_THRESHOLD = 0.4; // >= this (but below the match threshold): did-you-mean
+const DID_YOU_MEAN_LIMIT = 3;
 
 // License Status -> severity (data, not code) — packages/sync/DATA-SOURCES.md, decided
 // 2026-07-14. Any status not listed here defaults to CAUTION, never VERIFIED (see
@@ -73,24 +85,17 @@ function statusReason(agency: Agency): string {
   return `license status "${agency.licenseStatus}"${since}`;
 }
 
-export function checkAgency(query: string, state: RegistryState, now: Date = new Date()): RegistryVerdictResult {
-  const normalizedQuery = normalizeAgencyName(query);
-  const match = state.agencies.find((agency) => agency.normalizedName === normalizedQuery);
-
-  if (!match) {
-    return {
-      kind: "not_found",
-      verdict: "HIGH_RISK",
-      reasons: [`"${query}" not found in DMW list as of ${formatDate(state.syncedAt)}`],
-      syncedAt: state.syncedAt,
-    };
-  }
-
+function scoreMatchedAgency(
+  match: Agency,
+  matchReason: string,
+  syncedAt: Date,
+  now: Date,
+): RegistryVerdictResult {
   const statusVerdict = licenseStatusSeverity(match.licenseStatus);
   const expiry = computeExpirySeverity(match, now);
   const verdict = worstVerdict(statusVerdict, expiry?.verdict ?? "VERIFIED");
 
-  const reasons = [`matched exact name: ${match.name}`];
+  const reasons = [matchReason];
   if (statusVerdict !== "VERIFIED") {
     reasons.push(statusReason(match));
   }
@@ -98,7 +103,58 @@ export function checkAgency(query: string, state: RegistryState, now: Date = new
     reasons.push(expiry.reason);
   }
 
-  return { kind: "matched", verdict, reasons, agency: match, syncedAt: state.syncedAt };
+  return { kind: "matched", verdict, reasons, agency: match, syncedAt };
+}
+
+export function checkAgency(query: string, state: RegistryState, now: Date = new Date()): RegistryVerdictResult {
+  const normalizedQuery = normalizeAgencyName(query);
+  const exactMatch = state.agencies.find((agency) => agency.normalizedName === normalizedQuery);
+
+  if (exactMatch) {
+    return scoreMatchedAgency(exactMatch, `matched exact name: ${exactMatch.name}`, state.syncedAt, now);
+  }
+
+  const candidates = state.agencies
+    .map((agency) => ({ agency, similarity: trigramSimilarity(normalizedQuery, agency.normalizedName) }))
+    .filter((candidate) => candidate.similarity >= FUZZY_SUGGEST_THRESHOLD)
+    .sort((a, b) => b.similarity - a.similarity);
+
+  const strongMatches = candidates.filter((candidate) => candidate.similarity >= FUZZY_MATCH_THRESHOLD);
+
+  const [singleStrongMatch] = strongMatches;
+  if (strongMatches.length === 1 && singleStrongMatch) {
+    const { agency } = singleStrongMatch;
+    return scoreMatchedAgency(agency, `matched to: ${agency.name}`, state.syncedAt, now);
+  }
+
+  if (strongMatches.length > 1) {
+    // R16: two (or more) equally strong candidates — never auto-pick, show them all.
+    return {
+      kind: "ambiguous",
+      verdict: "CAUTION",
+      reasons: [`multiple close matches for "${query}" — did you mean one of these?`],
+      candidates: strongMatches.map((candidate) => candidate.agency),
+      syncedAt: state.syncedAt,
+    };
+  }
+
+  if (candidates.length > 0) {
+    // R5: no strong match, but at least one plausible one — surface a did-you-mean list.
+    return {
+      kind: "ambiguous",
+      verdict: "CAUTION",
+      reasons: [`no exact match for "${query}" — did you mean one of these?`],
+      candidates: candidates.slice(0, DID_YOU_MEAN_LIMIT).map((candidate) => candidate.agency),
+      syncedAt: state.syncedAt,
+    };
+  }
+
+  return {
+    kind: "not_found",
+    verdict: "HIGH_RISK",
+    reasons: [`"${query}" not found in DMW list as of ${formatDate(state.syncedAt)}`],
+    syncedAt: state.syncedAt,
+  };
 }
 
 // Fixture-backed RegistryState for surfaces (no live DB provisioned yet — see issue
