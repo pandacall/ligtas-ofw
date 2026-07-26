@@ -1,6 +1,25 @@
 {
+  "name": "ligtas-ofw",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "pretest": "tsx scripts/check-core-boundary.ts",
+    "test": "vitest run",
+    "dev": "npm run dev -w apps/web"
+  },
   "devDependencies": {
+    "@types/node": "^22.10.5",
     "playwright": "^1.61.1",
-    "tsx": "^4.23.1"
+    "tsx": "^4.23.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
   }
 }
