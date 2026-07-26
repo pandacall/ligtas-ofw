@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ligtas-ofw/db": "*"
+    "@ligtas-ofw/db": "*",
+    "zod": "^3.24.1"
   }
 }

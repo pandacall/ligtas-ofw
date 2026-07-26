@@ -5,7 +5,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const CORE_DIR = "packages/core";
-const ALLOWED_CORE_DEPS = ["@ligtas-ofw/db"];
+const ALLOWED_CORE_DEPS = ["@ligtas-ofw/db", "zod"];
 const BANNED_PREFIXES = ["next", "http", "https", "node:http", "node:https", "express"];
 
 // Matches the specifier of any import/require/re-export form, including
