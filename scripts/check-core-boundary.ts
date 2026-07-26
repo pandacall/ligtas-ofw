@@ -8,7 +8,11 @@ const CORE_DIR = "packages/core";
 const ALLOWED_CORE_DEPS = ["@ligtas-ofw/db"];
 const BANNED_PREFIXES = ["next", "http", "https", "node:http", "node:https", "express"];
 
-const IMPORT_PATTERN = /(?:import\s*\(|import\s+(?:[^"'()]*?\s+from\s+)?|require\()\s*["']([^"']+)["']/g;
+// Matches the specifier of any import/require/re-export form, including
+// ones split across multiple lines (e.g. Prettier-wrapped named imports):
+// `import ... from "x"`, `export ... from "x"`, bare `import "x"`,
+// `import("x")`, `require("x")`.
+const IMPORT_PATTERN = /(?:from\s*|require\(\s*|import\s*\(\s*|import\s+)["']([^"']+)["']/g;
 
 function isBanned(specifier: string): boolean {
   return BANNED_PREFIXES.some(
@@ -45,15 +49,13 @@ function checkImports(): string[] {
   const srcDir = join(CORE_DIR, "src");
   for (const file of walkTsFiles(srcDir)) {
     const contents = readFileSync(file, "utf-8");
-    const lines = contents.split("\n");
-    lines.forEach((line, index) => {
-      for (const match of line.matchAll(IMPORT_PATTERN)) {
-        const specifier = match[1];
-        if (specifier && isBanned(specifier)) {
-          violations.push(`${relative(".", file)}:${index + 1} — banned import "${specifier}"`);
-        }
+    for (const match of contents.matchAll(IMPORT_PATTERN)) {
+      const specifier = match[1];
+      if (specifier && isBanned(specifier) && match.index !== undefined) {
+        const line = contents.slice(0, match.index).split("\n").length;
+        violations.push(`${relative(".", file)}:${line} — banned import "${specifier}"`);
       }
-    });
+    }
   }
   return violations;
 }
