@@ -63,3 +63,17 @@ npx tsx starter/phase0-capture.ts   # writes to phase0-findings/
 ## Extractor usage (ADR-0002 / ADR-0003)
 
 Extraction uses an **OpenAI-compatible chat call** (provider/model/base URL are env config, never code): `response_format: json_schema` with `zodToJsonSchema(Extraction)` (on OpenRouter set `require_parameters: true`), vision-capable input (pasted text or screenshot — no OCR stage). Default model v1: `google/gemma-4-31b-it:free`; paid fallback Qwen2.5-VL via env var. Validate with `Extraction.safeParse`; for pasted text, drop any flag whose `evidence_quote` isn't a substring of the input. See the call sketch at the bottom of `starter/extraction.ts`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues (pandacall/ligtas-ofw) via the `gh` CLI; external PRs are a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage labels are used verbatim (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` (glossary) + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
