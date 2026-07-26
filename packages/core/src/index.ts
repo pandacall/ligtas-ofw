@@ -1,9 +1,5 @@
-// registry.ts (agency/job-order lookups) lands here in a later ticket.
 // Zero Next.js/HTTP imports are allowed in this directory — see
 // scripts/check-core-boundary.ts, which enforces this mechanically.
-import { DB_PLACEHOLDER } from "@ligtas-ofw/db";
-
-export const CORE_PLACEHOLDER = `core:${DB_PLACEHOLDER}`;
 
 export {
   Extraction,
@@ -20,4 +16,6 @@ export type {
   ScoredFlag,
   PostVerdictResult,
 } from "./verdict";
-export { FLAG_SEVERITY, scorePost, combineVerdict } from "./verdict";
+export { FLAG_SEVERITY, scorePost, combineVerdict, worstVerdict } from "./verdict";
+export type { RegistryState, RegistryVerdictResult } from "./registry";
+export { checkAgency, loadFixtureRegistryState, formatDate, LICENSE_STATUS_SEVERITY } from "./registry";

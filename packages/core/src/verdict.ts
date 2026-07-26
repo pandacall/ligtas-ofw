@@ -71,10 +71,12 @@ export const FLAG_SEVERITY: Record<RedFlag | DerivedFlag, FlagTier> = {
 
 const SEVERITY_ORDER: Verdict[] = ["VERIFIED", "CAUTION", "HIGH_RISK"];
 
+export function worstVerdict(a: Verdict, b: Verdict): Verdict {
+  return SEVERITY_ORDER.indexOf(b) > SEVERITY_ORDER.indexOf(a) ? b : a;
+}
+
 export function combineVerdict(registryVerdict: Verdict, postVerdict: Verdict): Verdict {
-  return SEVERITY_ORDER.indexOf(postVerdict) > SEVERITY_ORDER.indexOf(registryVerdict)
-    ? postVerdict
-    : registryVerdict;
+  return worstVerdict(registryVerdict, postVerdict);
 }
 
 // ---------- Derived Flags (engine-computed from facts, never LLM-observed) ----------
