@@ -71,3 +71,22 @@ export const syncMetadata = pgTable("sync_metadata", {
 });
 export type SyncMetadataRow = typeof syncMetadata.$inferSelect;
 export type NewSyncMetadataRow = typeof syncMetadata.$inferInsert;
+
+// One row per consumed scan attempt (issue #11). Both the per-IP sliding-window rate
+// limit and the global daily scan budget are derived by counting rows in this log over
+// different windows — see packages/core/src/quota.ts — rather than kept as separate
+// counters, so there is nothing to explicitly reset at day boundaries.
+export const scanQuotaEvents = pgTable(
+  "scan_quota_events",
+  {
+    id: serial("id").primaryKey(),
+    ip: text("ip").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  },
+  (table) => ({
+    createdAtIdx: index("scan_quota_events_created_at_idx").on(table.createdAt),
+    ipCreatedAtIdx: index("scan_quota_events_ip_created_at_idx").on(table.ip, table.createdAt),
+  }),
+);
+export type ScanQuotaEvent = typeof scanQuotaEvents.$inferSelect;
+export type NewScanQuotaEvent = typeof scanQuotaEvents.$inferInsert;

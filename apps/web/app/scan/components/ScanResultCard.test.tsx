@@ -53,6 +53,28 @@ describe("ScanResultCard — escape-hatch states", () => {
     expect(html).toContain("https://dmw.gov.ph");
     expect(html).toContain("2026-07-27");
   });
+
+  it("quota_exhausted (issue #11): renders the daily-budget copy, manual DMW search links, no verdict banner", () => {
+    const result: ScanResult = { kind: "quota_exhausted" };
+    const html = renderToStaticMarkup(<ScanResultCard result={result} syncedAt={SYNCED_AT} />);
+    expect(html).not.toContain("VERIFIED");
+    expect(html).not.toContain("CAUTION");
+    expect(html).not.toContain("HIGH_RISK");
+    expect(html).toContain("subukan ulit bukas");
+    expect(html).toContain("https://dmw.gov.ph");
+    expect(html).toContain("2026-07-27");
+  });
+
+  it("rate_limited (issue #11): renders the per-IP throttle copy, distinct from quota_exhausted, no verdict banner", () => {
+    const result: ScanResult = { kind: "rate_limited" };
+    const html = renderToStaticMarkup(<ScanResultCard result={result} syncedAt={SYNCED_AT} />);
+    expect(html).not.toContain("VERIFIED");
+    expect(html).not.toContain("CAUTION");
+    expect(html).not.toContain("HIGH_RISK");
+    expect(html).not.toContain("subukan ulit bukas");
+    expect(html).toContain("sandaling maghintay");
+    expect(html).toContain("2026-07-27");
+  });
 });
 
 describe("ScanResultCard — scored results", () => {

@@ -15,6 +15,13 @@
       "when": 1785116296866,
       "tag": "0001_stale_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785125141828,
+      "tag": "0002_lush_betty_ross",
+      "breakpoints": true
     }
   ]
 }

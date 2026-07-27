@@ -91,6 +91,13 @@ reached, subukan ulit bukas" copy — it never pretends the post couldn't be ana
 Agency check is unaffected (no LLM involved).
 _Avoid_: rate limited, out of credits.
 
+**Rate Limited**:
+An escape-hatch state (not a point on the severity scale) when a single IP exceeds the
+per-IP sliding-window scan limit. Distinct from Quota Exhausted (the shared daily budget)
+— this is one caller being throttled, not the whole quota being spent. Renders a short
+"try again shortly" message; no manual-search links needed since this is transient.
+_Avoid_: quota exhausted, blocked, throttled.
+
 ### Registry & data
 
 **Agency**:
