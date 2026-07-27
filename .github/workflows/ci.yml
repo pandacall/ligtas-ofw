@@ -17,4 +17,9 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run test:db:up
       - run: npm test
+        env:
+          TEST_DATABASE_URL: postgres://ligtas_test:ligtas_test@localhost:55432/ligtas_ofw_test
+      - if: always()
+        run: npm run test:db:down

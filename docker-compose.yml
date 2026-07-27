@@ -1,0 +1,14 @@
+services:
+  postgres-test:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ligtas_test
+      POSTGRES_PASSWORD: ligtas_test
+      POSTGRES_DB: ligtas_ofw_test
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ligtas_test -d ligtas_ofw_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
