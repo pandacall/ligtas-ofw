@@ -1,12 +1,10 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { agencies, createDbClient, jobOrders, syncMetadata } from "@ligtas-ofw/db";
 import type { Agency, JobOrder } from "@ligtas-ofw/db";
 import { isTripwireTriggered, stageAndPromote } from "./promote";
 import { SyncError } from "./errors";
+import { SKIP_INTEGRATION, connectTestDb } from "./test-db";
 
 describe("isTripwireTriggered", () => {
   it("does not trigger on a first-ever sync (live count 0)", () => {
@@ -24,24 +22,12 @@ describe("isTripwireTriggered", () => {
   });
 });
 
-const MIGRATIONS_FOLDER = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../db/migrations");
-const testDatabaseUrl = process.env.TEST_DATABASE_URL;
-const isCI = Boolean(process.env.CI);
-
-// Required in CI (see docker-compose.yml + .github/workflows/ci.yml); locally, skip rather
-// than fail if a developer hasn't run `npm run test:db:up`.
-describe.skipIf(!testDatabaseUrl && !isCI)("stageAndPromote (integration)", () => {
+// Skip/fail asymmetry (unset -> skip locally, must fail in CI) lives in test-db.ts.
+describe.skipIf(SKIP_INTEGRATION)("stageAndPromote (integration)", () => {
   let db: ReturnType<typeof createDbClient>;
 
   beforeAll(async () => {
-    if (!testDatabaseUrl) {
-      throw new Error(
-        "TEST_DATABASE_URL is required to run packages/sync's integration tests. Run `npm run test:db:up` " +
-          "and set TEST_DATABASE_URL (see .env.example) locally, or ensure CI provisions it.",
-      );
-    }
-    db = createDbClient(testDatabaseUrl);
-    await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+    db = await connectTestDb();
   });
 
   afterAll(async () => {

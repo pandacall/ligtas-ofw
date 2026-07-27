@@ -9,7 +9,6 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { eq, sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { agencies, createDbClient, jobOrders } from "@ligtas-ofw/db";
 import type { RawJobOrder } from "@ligtas-ofw/db";
@@ -17,6 +16,7 @@ import { fetchAllPages } from "./dmw-client";
 import type { DmwRawAgencyRecord } from "./map";
 import { mapAgencies, mapJobOrders } from "./map";
 import { stageAndPromote } from "./promote";
+import { SKIP_INTEGRATION, connectTestDb } from "./test-db";
 
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -36,21 +36,12 @@ function singlePageFetchImpl(recorded: { meta: { lastPage: number }; data: unkno
   return (async () => new Response(JSON.stringify(singlePage))) as unknown as typeof fetch;
 }
 
-const testDatabaseUrl = process.env.TEST_DATABASE_URL;
-const isCI = Boolean(process.env.CI);
-
-describe.skipIf(!testDatabaseUrl && !isCI)("sync pipeline (recorded fixtures -> real Postgres)", () => {
+// Skip/fail asymmetry (unset -> skip locally, must fail in CI) lives in test-db.ts.
+describe.skipIf(SKIP_INTEGRATION)("sync pipeline (recorded fixtures -> real Postgres)", () => {
   let db: ReturnType<typeof createDbClient>;
 
   beforeAll(async () => {
-    if (!testDatabaseUrl) {
-      throw new Error(
-        "TEST_DATABASE_URL is required to run packages/sync's integration tests. Run `npm run test:db:up` " +
-          "and set TEST_DATABASE_URL (see .env.example) locally, or ensure CI provisions it.",
-      );
-    }
-    db = createDbClient(testDatabaseUrl);
-    await migrate(db, { migrationsFolder: path.join(REPO_ROOT, "packages/db/migrations") });
+    db = await connectTestDb();
     await db.execute(sql`TRUNCATE agencies, job_orders, sync_metadata, agencies_staging, job_orders_staging`);
   });
 
