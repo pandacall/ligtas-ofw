@@ -98,7 +98,7 @@ function compareFields(expect: EvalFixtureExpect, extraction: Extraction): strin
 
 async function gradeFixture(fixture: EvalFixture, extractor: ExtractorClient): Promise<FixtureGrade> {
   const expectedVerdict = fixture.expect.verdict;
-  const extraction = await runExtractor(fixture.text, extractor);
+  const extraction = await runExtractor({ kind: "text", text: fixture.text }, extractor);
 
   if (extraction === null) {
     return {

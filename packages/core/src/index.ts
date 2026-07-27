@@ -24,7 +24,7 @@ export type { JobOrder } from "@ligtas-ofw/db";
 // Re-exported so apps/web (which depends on core only, never on @ligtas-ofw/db directly)
 // can construct the real db client to wire into createPostgresQuotaStore.
 export { createDbClient } from "@ligtas-ofw/db";
-export type { ExtractorClient, ExtractorMessage, ScanResult } from "./scan";
+export type { ExtractorClient, ExtractorMessage, ExtractorContentPart, ScanInput, ScanResult } from "./scan";
 export { scanPost, runExtractor } from "./scan";
 export type { QuotaConfig, QuotaStore, QuotaCheckResult } from "./quota";
 export { checkAndConsumeQuota } from "./quota";

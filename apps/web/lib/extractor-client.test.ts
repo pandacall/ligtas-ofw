@@ -55,6 +55,22 @@ describe("openRouterExtractorClient / createOpenRouterExtractorClient", () => {
     expect(requestBody(fetchMock)).not.toHaveProperty("temperature");
   });
 
+  it("passes an image_url content-part through the request body unchanged (no OCR stage — ADR-0003)", async () => {
+    const fetchMock = fetchMockReturning({ is_job_post: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const imageMessage = {
+      role: "user" as const,
+      content: [
+        { type: "text" as const, text: "instruction" },
+        { type: "image_url" as const, image_url: { url: "data:image/png;base64,AAAA" } },
+      ],
+    };
+    await openRouterExtractorClient([imageMessage]);
+
+    expect(requestBody(fetchMock).messages).toEqual([imageMessage]);
+  });
+
   it("throws when EXTRACTOR_API_KEY is unset, from both the default export and a factory-created client", async () => {
     vi.stubEnv("EXTRACTOR_API_KEY", "");
     vi.stubGlobal("fetch", fetchMockReturning({}));

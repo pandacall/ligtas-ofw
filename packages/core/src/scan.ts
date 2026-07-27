@@ -11,8 +11,33 @@ import { combineVerdict, scorePost } from "./verdict";
 import type { RegistryState, RegistryVerdictResult } from "./registry";
 import { checkAgency } from "./registry";
 
-export type ExtractorMessage = { role: "system" | "user"; content: string };
+export type ExtractorContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+export type ExtractorMessage = { role: "system" | "user"; content: string | ExtractorContentPart[] };
 export type ExtractorClient = (messages: ExtractorMessage[]) => Promise<unknown>;
+
+export type ScanInput = { kind: "text"; text: string } | { kind: "image"; dataUrl: string };
+
+// Screenshots have no separate OCR stage (ADR-0003) — this instruction accompanies the
+// image_url content-part so the vision model knows to read and extract from it directly.
+const IMAGE_INPUT_INSTRUCTION =
+  "The image below is a screenshot of a job-post advertisement (e.g. a Facebook or TikTok " +
+  "post). Read all visible text in the image, then extract the same fields you would from " +
+  "pasted text, following the rules above.";
+
+function buildUserMessage(input: ScanInput): ExtractorMessage {
+  if (input.kind === "text") {
+    return { role: "user", content: input.text };
+  }
+  return {
+    role: "user",
+    content: [
+      { type: "text", text: IMAGE_INPUT_INSTRUCTION },
+      { type: "image_url", image_url: { url: input.dataUrl } },
+    ],
+  };
+}
 
 export type ScanResult =
   | { kind: "not_a_job_post" }
@@ -62,10 +87,10 @@ function retryMessageFor(failure: Extract<ExtractCallResult, { ok: false }>): Ex
   return { role: "user", content };
 }
 
-export async function runExtractor(text: string, extractor: ExtractorClient): Promise<Extraction | null> {
+export async function runExtractor(input: ScanInput, extractor: ExtractorClient): Promise<Extraction | null> {
   const messages: ExtractorMessage[] = [
     { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-    { role: "user", content: text },
+    buildUserMessage(input),
   ];
 
   const first = await callExtractor(extractor, messages);
@@ -80,18 +105,21 @@ export async function runExtractor(text: string, extractor: ExtractorClient): Pr
 }
 
 export async function scanPost(
-  text: string,
+  input: ScanInput,
   deps: { extractor: ExtractorClient; registryState: RegistryState; now?: Date },
 ): Promise<ScanResult> {
-  const extraction = await runExtractor(text, deps.extractor);
+  const extraction = await runExtractor(input, deps.extractor);
   if (extraction === null) {
     return { kind: "unanalyzable" };
   }
 
-  const filteredExtraction: Extraction = {
-    ...extraction,
-    red_flags: filterUnverifiedFlags(extraction.red_flags, text),
-  };
+  // ADR-0003: the evidence-substring guard only applies to text input, where source text
+  // exists to verify evidence_quote against. Screenshots have no ground truth to check the
+  // transcription against — the model's evidence_quote is accepted as-is.
+  const filteredExtraction: Extraction =
+    input.kind === "text"
+      ? { ...extraction, red_flags: filterUnverifiedFlags(extraction.red_flags, input.text) }
+      : extraction;
 
   const postResult = scorePost(filteredExtraction);
   if (postResult.kind !== "scored") {
