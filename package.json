@@ -13,7 +13,9 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "pretest": "tsx scripts/check-core-boundary.ts",
     "test": "vitest run",
-    "dev": "npm run dev -w apps/web"
+    "dev": "npm run dev -w apps/web",
+    "test:db:up": "docker compose up -d --wait",
+    "test:db:down": "docker compose down"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

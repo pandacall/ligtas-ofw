@@ -1,0 +1,41 @@
+name: Nightly Registry Sync
+
+on:
+  schedule:
+    # 18:00 UTC ≈ 2am Philippine time (UTC+8)
+    - cron: "0 18 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run sync -w @ligtas-ofw/sync
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DMW_API_KEY: ${{ secrets.DMW_API_KEY }}
+      - if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Nightly Registry sync failed ($(date -u +%Y-%m-%d))" \
+            --label needs-triage \
+            --body "The nightly sync workflow failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Check the run logs above for the failure cause. If it's a 401 (rotated \`x-api-key\`):
+          1. Re-run \`npx tsx starter/phase0-capture.ts\` (see packages/sync/DATA-SOURCES.md) to find the new key.
+          2. Update the \`DMW_API_KEY\` repository secret.
+          3. Re-run this workflow via workflow_dispatch.
+
+          No automatic key re-discovery runs in CI — a rotation is a \"DMW changed something\" signal a maintainer should see."

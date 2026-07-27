@@ -14,7 +14,7 @@ const DEFAULT_SNAPSHOT_PATH = path.join(
   "../fixtures/registry-snapshot.json",
 );
 
-interface RawAgency {
+export interface RawAgency {
   name: string;
   classification: string | null;
   license_status: string;
@@ -30,7 +30,7 @@ interface RawAgency {
   data_as_of: string;
 }
 
-interface RawJobOrder {
+export interface RawJobOrder {
   agency: string;
   principal: string;
   jobsite: string;
