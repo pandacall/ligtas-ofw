@@ -58,7 +58,7 @@ function retryMessageFor(failure: Extract<ExtractCallResult, { ok: false }>): Ex
   return { role: "user", content };
 }
 
-async function runExtractor(text: string, extractor: ExtractorClient): Promise<Extraction | null> {
+export async function runExtractor(text: string, extractor: ExtractorClient): Promise<Extraction | null> {
   const messages: ExtractorMessage[] = [
     { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
     { role: "user", content: text },

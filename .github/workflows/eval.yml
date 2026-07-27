@@ -1,0 +1,39 @@
+name: Eval
+
+# LLM eval harness (issue #10 / ADR-0003 "measure first"). Runs on PRs that touch the
+# extraction/verdict code paths or the fixture set, plus manual dispatch. One full run
+# consumes 20 of OpenRouter's 50 daily free-tier requests (up to 40 if extraction retries
+# fire — the harness reuses scan.ts's retry-once-on-failure wrapper). Add the `skip-eval`
+# label to a PR to skip this check (e.g. a comment-only or doc-only change on a matched
+# path); `types: [..., labeled, unlabeled]` ensures adding OR removing the label
+# re-evaluates an already-open PR. workflow_dispatch always runs regardless of label or
+# changed paths.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - "packages/core/src/extraction.ts"
+      - "packages/core/src/verdict.ts"
+      - "packages/core/src/scan.ts"
+      - "packages/core/src/eval.ts"
+      - "apps/web/lib/extractor-client.ts"
+      - "starter/fixtures-posts.json"
+  workflow_dispatch: {}
+
+jobs:
+  eval:
+    if: >-
+      ${{ github.event_name != 'pull_request' ||
+          !contains(github.event.pull_request.labels.*.name, 'skip-eval') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run eval
+        env:
+          EXTRACTOR_API_KEY: ${{ secrets.EXTRACTOR_API_KEY }}

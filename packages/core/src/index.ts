@@ -22,7 +22,7 @@ export { checkAgency, loadFixtureRegistryState, LICENSE_STATUS_SEVERITY } from "
 export { formatDate } from "./format";
 export type { JobOrder } from "@ligtas-ofw/db";
 export type { ExtractorClient, ExtractorMessage, ScanResult } from "./scan";
-export { scanPost } from "./scan";
+export { scanPost, runExtractor } from "./scan";
 export {
   FLAG_COPY,
   VERDICT_BANNER,
@@ -31,3 +31,12 @@ export {
   LICENSE_FORMAT_NEUTRAL_COPY,
 } from "./copy";
 export type { FlagCopyTemplate } from "./copy";
+export type {
+  EvalVerdict,
+  EvalFixture,
+  EvalFixtureExpect,
+  EvalFixtureFile,
+  FixtureGrade,
+  EvalReport,
+} from "./eval";
+export { flattenFixtures, runFixtureEval } from "./eval";
