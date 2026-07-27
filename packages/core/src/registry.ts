@@ -13,6 +13,7 @@ import {
 } from "@ligtas-ofw/db";
 import type { Verdict } from "./verdict";
 import { worstVerdict } from "./verdict";
+import { formatDate } from "./format";
 
 export type RegistryState = {
   agencies: Agency[];
@@ -78,11 +79,6 @@ function licenseStatusSeverity(status: string): Verdict {
 
 const EXPIRY_WARNING_WINDOW_DAYS = 60;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-// Exported so Surfaces render dates the same way the reasons[] strings do.
-export function formatDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 function computeExpirySeverity(agency: Agency, now: Date): { verdict: Verdict; reason: string } | null {
   const expiration = agency.licenseExpirationDate;

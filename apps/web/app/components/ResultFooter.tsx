@@ -1,8 +1,8 @@
 // Mandatory footer (CLAUDE.md / verdict-cases.md): freshness line + official DMW verify
 // link + hotline, required on every result. Snapshot-tested in ResultFooter.test.tsx.
-import { formatDate } from "@ligtas-ofw/core";
+import { formatDate } from "@ligtas-ofw/core/format";
 
-const DMW_VERIFY_URL = "https://dmw.gov.ph";
+export const DMW_VERIFY_URL = "https://dmw.gov.ph";
 const DMW_HOTLINE = "1348";
 const DMW_AIRT_HOTLINE = "(02) 8722-1144 / 8722-1155";
 const IACAT_HOTLINE = "1343";

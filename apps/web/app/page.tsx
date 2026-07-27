@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { checkAgency, loadFixtureRegistryState } from "@ligtas-ofw/core";
 import { ResultCard } from "./components/ResultCard";
 
@@ -29,6 +30,9 @@ export default async function HomePage({
         <button type="submit">Check</button>
       </form>
       {query && <ResultCard result={checkAgency(query, loadFixtureRegistryState(), new Date(), claim)} />}
+      <p>
+        <Link href="/scan">Scan a job post instead</Link>
+      </p>
     </main>
   );
 }
