@@ -1,9 +1,44 @@
-import type { RegistryVerdictResult } from "@ligtas-ofw/core";
+import type { JobOrder, RegistryVerdictResult } from "@ligtas-ofw/core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ResultCard } from "./ResultCard";
 
 const SYNCED_AT = new Date("2026-07-27T05:00:00.000Z");
+
+function baseAgency() {
+  return {
+    id: 1,
+    name: "XYZ International Placement Agency, Inc.",
+    normalizedName: "xyz international placement agency inc",
+    classification: "Private Employment Agency",
+    licenseStatus: "Valid License",
+    licenseStatusDate: new Date("2024-01-15T00:00:00.000Z"),
+    licenseExpirationDate: new Date("2030-01-15T00:00:00.000Z"),
+    isValid: true,
+    representative: "Maria Santos",
+    address: "Unit 501, ABC Business Center",
+    municipalityProvince: "Makati",
+    cityProvince: "Metro Manila",
+    contactNumber: "(02) 8888-1234",
+    email: "info@example.ph",
+    dataAsOf: new Date("2026-07-14T05:00:00.000Z"),
+  };
+}
+
+function baseJobOrder(overrides: Partial<JobOrder> = {}): JobOrder {
+  return {
+    id: 1,
+    agencyName: "XYZ International Placement Agency, Inc.",
+    principal: "Nakamoto Marine Co",
+    jobsite: "Japan",
+    position: "Welder",
+    balance: 12,
+    dateApproved: new Date("2026-03-01T00:00:00.000Z"),
+    accreditationClass: "Regular Accreditation",
+    dataAsOf: new Date("2026-07-14T04:00:00.000Z"),
+    ...overrides,
+  };
+}
 
 describe("ResultCard", () => {
   it("R6-style not_found: renders HIGH_RISK and the report block, no agency details", () => {
@@ -26,6 +61,7 @@ describe("ResultCard", () => {
       verdict: "VERIFIED",
       reasons: ["matched exact name: XYZ International Placement Agency, Inc."],
       syncedAt: SYNCED_AT,
+      jobOrders: [],
       agency: {
         id: 1,
         name: "XYZ International Placement Agency, Inc.",
@@ -57,6 +93,7 @@ describe("ResultCard", () => {
       verdict: "VERIFIED",
       reasons: ["matched to: XYZ International Placement Agency, Inc."],
       syncedAt: SYNCED_AT,
+      jobOrders: [],
       agency: {
         id: 1,
         name: "XYZ International Placement Agency, Inc.",
@@ -140,6 +177,7 @@ describe("ResultCard", () => {
       verdict: "HIGH_RISK",
       reasons: ["matched exact name: Golden Gate Manpower Corp", 'license status "Cancelled" since 2026-02-10'],
       syncedAt: SYNCED_AT,
+      jobOrders: [],
       agency: {
         id: 4,
         name: "Golden Gate Manpower Corp",
@@ -162,5 +200,97 @@ describe("ResultCard", () => {
     expect(html).toContain("HIGH_RISK");
     expect(html).toContain("Cancelled");
     expect(html).toContain("Paano mag-report");
+  });
+});
+
+describe("ResultCard — Job Orders (issue #5)", () => {
+  it("lists each Job Order's position, jobsite, and principal", () => {
+    const jobOrder = baseJobOrder();
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "VERIFIED",
+      reasons: ["matched exact name: XYZ International Placement Agency, Inc."],
+      syncedAt: SYNCED_AT,
+      jobOrders: [jobOrder],
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("Welder");
+    expect(html).toContain("Japan");
+    expect(html).toContain("Nakamoto Marine Co");
+  });
+
+  it("renders 'no approved Job Orders on file' when the list is empty and no claim was supplied", () => {
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "VERIFIED",
+      reasons: ["matched exact name: XYZ International Placement Agency, Inc."],
+      syncedAt: SYNCED_AT,
+      jobOrders: [],
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("No approved Job Orders on file");
+  });
+
+  it("R12-style claim match: renders the confirming reason and marks the matched row", () => {
+    const jobOrder = baseJobOrder();
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "VERIFIED",
+      reasons: [
+        "matched exact name: XYZ International Placement Agency, Inc.",
+        "approved job order on file: Welder in Japan (principal: Nakamoto Marine Co)",
+      ],
+      syncedAt: SYNCED_AT,
+      jobOrders: [jobOrder],
+      claimedMatch: jobOrder,
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("VERIFIED");
+    expect(html).toContain("approved job order on file: Welder in Japan");
+    expect(html).toContain("matches your claim");
+  });
+
+  it("R13-style claim miss: rows exist but none match => CAUTION copy naming the destination", () => {
+    const jobOrder = baseJobOrder({ jobsite: "Saudi Arabia", position: "Domestic Worker" });
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "CAUTION",
+      reasons: [
+        "matched exact name: XYZ International Placement Agency, Inc.",
+        "no approved job order for Japan on file",
+      ],
+      syncedAt: SYNCED_AT,
+      jobOrders: [jobOrder],
+      claimedMatch: null,
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("CAUTION");
+    expect(html).toContain("no approved job order for Japan on file");
+    expect(html).not.toContain("matches your claim");
+  });
+
+  it("R14-style empty registry + claim: renders the 'data may lag' CAUTION copy", () => {
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "CAUTION",
+      reasons: [
+        "matched exact name: XYZ International Placement Agency, Inc.",
+        "no job orders on file — data may lag; verify",
+      ],
+      syncedAt: SYNCED_AT,
+      jobOrders: [],
+      claimedMatch: null,
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+    expect(html).toContain("CAUTION");
+    expect(html).toContain("data may lag");
+    expect(html).toContain("No approved Job Orders on file");
+    // Never HIGH_RISK for a missing Job Order match.
+    expect(html).not.toContain("HIGH_RISK");
   });
 });

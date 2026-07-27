@@ -3,20 +3,41 @@
  * Computed independently of the Post Verdict — see verdict.ts's combineVerdict/worstVerdict
  * for how the two are combined (worst-of).
  */
-import type { Agency } from "@ligtas-ofw/db";
-import { loadRegistrySnapshot, normalizeAgencyName, toAgencyRows, trigramSimilarity } from "@ligtas-ofw/db";
+import type { Agency, JobOrder } from "@ligtas-ofw/db";
+import {
+  loadRegistrySnapshot,
+  normalizeAgencyName,
+  toAgencyRows,
+  toJobOrderRows,
+  trigramSimilarity,
+} from "@ligtas-ofw/db";
 import type { Verdict } from "./verdict";
 import { worstVerdict } from "./verdict";
 
 export type RegistryState = {
   agencies: Agency[];
+  jobOrders: JobOrder[];
   syncedAt: Date;
 };
+
+// A user-supplied destination/position to confirm against the agency's Job Orders
+// (issue #5). Both fields are required together — a partial claim isn't scored.
+export type ClaimedJobOrder = { destination: string; position: string };
 
 export type RegistryVerdictResult =
   | { kind: "not_found"; verdict: "HIGH_RISK"; reasons: string[]; syncedAt: Date }
   | { kind: "ambiguous"; verdict: "CAUTION"; reasons: string[]; candidates: Agency[]; syncedAt: Date }
-  | { kind: "matched"; verdict: Verdict; reasons: string[]; agency: Agency; syncedAt: Date };
+  | {
+      kind: "matched";
+      verdict: Verdict;
+      reasons: string[];
+      agency: Agency;
+      // Always populated (possibly empty) so a Surface can list them (Story 7).
+      jobOrders: JobOrder[];
+      // undefined: no claim supplied. null: claim supplied, no match. JobOrder: matched.
+      claimedMatch?: JobOrder | null;
+      syncedAt: Date;
+    };
 
 // Fuzzy-match thresholds (data, not code) — starter/verdict-cases.md R4/R5/R6/R16, decided
 // 2026-07-27. Trigram similarity modeled on pg_trgm; see @ligtas-ofw/db's trigramSimilarity —
@@ -85,15 +106,30 @@ function statusReason(agency: Agency): string {
   return `license status "${agency.licenseStatus}"${since}`;
 }
 
+// Job Orders join to Agencies by normalized name string only — the DMW API has no id
+// (ADR-0001, same normalizer as the exact-match agency lookup).
+function jobOrdersForAgency(agency: Agency, jobOrders: JobOrder[]): JobOrder[] {
+  return jobOrders.filter((jobOrder) => normalizeAgencyName(jobOrder.agencyName) === agency.normalizedName);
+}
+
+// Case-insensitive, trimmed: real DMW job-order data is all-caps (DATA-SOURCES.md).
+function matchesClaim(jobOrder: JobOrder, claim: ClaimedJobOrder): boolean {
+  return (
+    jobOrder.jobsite.trim().toLowerCase() === claim.destination.trim().toLowerCase() &&
+    jobOrder.position.trim().toLowerCase() === claim.position.trim().toLowerCase()
+  );
+}
+
 function scoreMatchedAgency(
   match: Agency,
   matchReason: string,
-  syncedAt: Date,
+  state: RegistryState,
   now: Date,
+  claim?: ClaimedJobOrder,
 ): RegistryVerdictResult {
   const statusVerdict = licenseStatusSeverity(match.licenseStatus);
   const expiry = computeExpirySeverity(match, now);
-  const verdict = worstVerdict(statusVerdict, expiry?.verdict ?? "VERIFIED");
+  let verdict = worstVerdict(statusVerdict, expiry?.verdict ?? "VERIFIED");
 
   const reasons = [matchReason];
   if (statusVerdict !== "VERIFIED") {
@@ -103,15 +139,45 @@ function scoreMatchedAgency(
     reasons.push(expiry.reason);
   }
 
-  return { kind: "matched", verdict, reasons, agency: match, syncedAt };
+  const jobOrders = jobOrdersForAgency(match, state.jobOrders);
+  let claimedMatch: JobOrder | null | undefined;
+
+  // Job Order confirmation only kicks in when the user supplies a claim (issue #5's
+  // "What to build") — with no claim, jobOrders is purely an informational listing
+  // (Story 7) and never affects the verdict, even when empty.
+  if (claim) {
+    const found = jobOrders.find((jobOrder) => matchesClaim(jobOrder, claim));
+    if (found) {
+      claimedMatch = found;
+      reasons.push(`approved job order on file: ${found.position} in ${found.jobsite} (principal: ${found.principal})`);
+    } else {
+      claimedMatch = null;
+      // R13/R14: a missing match is always CAUTION, never HIGH_RISK — worstVerdict can
+      // only raise VERIFIED to CAUTION here, it can't push an already-CAUTION/HIGH_RISK
+      // verdict any further.
+      verdict = worstVerdict(verdict, "CAUTION");
+      reasons.push(
+        jobOrders.length === 0
+          ? "no job orders on file — data may lag; verify"
+          : `no approved job order for ${claim.destination} on file`,
+      );
+    }
+  }
+
+  return { kind: "matched", verdict, reasons, agency: match, jobOrders, claimedMatch, syncedAt: state.syncedAt };
 }
 
-export function checkAgency(query: string, state: RegistryState, now: Date = new Date()): RegistryVerdictResult {
+export function checkAgency(
+  query: string,
+  state: RegistryState,
+  now: Date = new Date(),
+  claim?: ClaimedJobOrder,
+): RegistryVerdictResult {
   const normalizedQuery = normalizeAgencyName(query);
   const exactMatch = state.agencies.find((agency) => agency.normalizedName === normalizedQuery);
 
   if (exactMatch) {
-    return scoreMatchedAgency(exactMatch, `matched exact name: ${exactMatch.name}`, state.syncedAt, now);
+    return scoreMatchedAgency(exactMatch, `matched exact name: ${exactMatch.name}`, state, now, claim);
   }
 
   const candidates = state.agencies
@@ -124,7 +190,7 @@ export function checkAgency(query: string, state: RegistryState, now: Date = new
   const [singleStrongMatch] = strongMatches;
   if (strongMatches.length === 1 && singleStrongMatch) {
     const { agency } = singleStrongMatch;
-    return scoreMatchedAgency(agency, `matched to: ${agency.name}`, state.syncedAt, now);
+    return scoreMatchedAgency(agency, `matched to: ${agency.name}`, state, now, claim);
   }
 
   if (strongMatches.length > 1) {
@@ -162,5 +228,9 @@ export function checkAgency(query: string, state: RegistryState, now: Date = new
 // only ever depend on checkAgency + RegistryState, never on how the state was loaded.
 export function loadFixtureRegistryState(): RegistryState {
   const snapshot = loadRegistrySnapshot();
-  return { agencies: toAgencyRows(snapshot), syncedAt: new Date(snapshot.syncedAt) };
+  return {
+    agencies: toAgencyRows(snapshot),
+    jobOrders: toJobOrderRows(snapshot),
+    syncedAt: new Date(snapshot.syncedAt),
+  };
 }

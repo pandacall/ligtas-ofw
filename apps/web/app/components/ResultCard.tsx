@@ -1,4 +1,4 @@
-import type { RegistryVerdictResult } from "@ligtas-ofw/core";
+import type { JobOrder, RegistryVerdictResult } from "@ligtas-ofw/core";
 import { formatDate } from "@ligtas-ofw/core";
 import { ResultFooter } from "./ResultFooter";
 
@@ -68,7 +68,37 @@ export function ResultCard({ result }: { result: RegistryVerdictResult }) {
           <li key={reason}>{reason}</li>
         ))}
       </ul>
+      <JobOrdersSection jobOrders={result.jobOrders} claimedMatch={result.claimedMatch} />
       <ResultFooter dataAsOf={agency.dataAsOf} syncedAt={result.syncedAt} showReportBlock={showReportBlock} />
+    </section>
+  );
+}
+
+function JobOrdersSection({
+  jobOrders,
+  claimedMatch,
+}: {
+  jobOrders: JobOrder[];
+  claimedMatch?: JobOrder | null;
+}) {
+  return (
+    <section>
+      <h4>Job Orders</h4>
+      {jobOrders.length === 0 ? (
+        <p>No approved Job Orders on file.</p>
+      ) : (
+        <ul>
+          {jobOrders.map((jobOrder) => {
+            const isClaimedMatch = claimedMatch != null && claimedMatch.id === jobOrder.id;
+            return (
+              <li key={jobOrder.id}>
+                {jobOrder.position} &mdash; {jobOrder.jobsite} (principal: {jobOrder.principal})
+                {isClaimedMatch && " ✅ matches your claim"}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }

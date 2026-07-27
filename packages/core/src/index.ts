@@ -17,5 +17,6 @@ export type {
   PostVerdictResult,
 } from "./verdict";
 export { FLAG_SEVERITY, scorePost, combineVerdict, worstVerdict } from "./verdict";
-export type { RegistryState, RegistryVerdictResult } from "./registry";
+export type { RegistryState, RegistryVerdictResult, ClaimedJobOrder } from "./registry";
 export { checkAgency, loadFixtureRegistryState, formatDate, LICENSE_STATUS_SEVERITY } from "./registry";
+export type { JobOrder } from "@ligtas-ofw/db";
