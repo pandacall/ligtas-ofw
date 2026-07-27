@@ -17,6 +17,10 @@ export type ExtractorClient = (messages: ExtractorMessage[]) => Promise<unknown>
 export type ScanResult =
   | { kind: "not_a_job_post" }
   | { kind: "unanalyzable" }
+  // Quota protection (issue #11): produced by the Surface calling checkAndConsumeQuota
+  // (quota.ts) before ever invoking scanPost — scanPost itself never returns these.
+  | { kind: "quota_exhausted" }
+  | { kind: "rate_limited" }
   | {
       kind: "scored";
       verdict: Verdict;
@@ -58,7 +62,7 @@ function retryMessageFor(failure: Extract<ExtractCallResult, { ok: false }>): Ex
   return { role: "user", content };
 }
 
-async function runExtractor(text: string, extractor: ExtractorClient): Promise<Extraction | null> {
+export async function runExtractor(text: string, extractor: ExtractorClient): Promise<Extraction | null> {
   const messages: ExtractorMessage[] = [
     { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
     { role: "user", content: text },

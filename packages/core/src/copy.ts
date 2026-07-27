@@ -112,6 +112,17 @@ export const NOT_A_JOB_POST_COPY =
 export const UNANALYZABLE_COPY =
   "Hindi namin na-analyze ang post na ito. Huwag ipagpalagay na ligtas o peke ito — mangyaring i-check nang mano-mano sa opisyal na DMW website o tumawag sa DMW Hotline 1348.";
 
+// Quota Exhausted (CONTEXT.md): the shared daily scan budget is spent for everyone —
+// honest "come back tomorrow" copy, never implying the post itself couldn't be analyzed.
+// The Agency check is unaffected (no LLM involved), so it's mentioned as still available.
+export const QUOTA_EXHAUSTED_COPY =
+  "Naabot na ang araw-araw na libreng scan limit namin — subukan ulit bukas. Puwede ka pa ring mag-check ng ahensya sa DMW registry.";
+
+// Rate Limited (CONTEXT.md): this one IP has been throttled, distinct from Quota
+// Exhausted — a short wait, not a "come back tomorrow."
+export const RATE_LIMITED_COPY =
+  "Sobra-sobra ang mga scan request mula sa iyo sa maikling panahon — sandaling maghintay at subukan ulit.";
+
 // A valid-format claimed license is never presented as reassurance (verdict-cases.md's
 // Copy rules, quoted verbatim) — a valid format is trivially forgeable and never counts
 // toward VERIFIED, so its copy stays deflationary.

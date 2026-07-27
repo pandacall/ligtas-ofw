@@ -13,6 +13,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "pretest": "tsx scripts/check-core-boundary.ts",
     "test": "vitest run",
+    "eval": "tsx scripts/eval-fixtures.ts",
     "dev": "npm run dev -w apps/web",
     "test:db:up": "docker compose up -d --wait",
     "test:db:down": "docker compose down"
