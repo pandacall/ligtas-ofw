@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**This is a spec-stage project.** The `starter/` directory holds the design — Zod schemas, the extraction prompt, the verdict-engine test matrix, and LLM eval fixtures — but the application itself has not been scaffolded yet. There is no `package.json`, build, lint, or test runner. When implementing, treat `starter/` as the authoritative spec, not as code to import as-is (the intended package layout, e.g. `packages/core/extraction.ts`, differs from the flat `starter/` location).
+The workspace is scaffolded: an npm-workspaces monorepo with four modules — `packages/db` (Drizzle schema + client), `packages/core` (extraction schemas + prompt, verdict engine, registry lookup — zero Next.js/HTTP imports, mechanically enforced by `scripts/check-core-boundary.ts`), `packages/sync` (nightly registry sync, still a stub — see "Data sync" below), and `apps/web` (the Next.js Surface). TypeScript and vitest are wired at the root (`npm run typecheck`, `npm test`); CI runs both on every push/PR.
+
+`packages/core/src/{extraction,verdict,registry,scan,copy}.ts` are the real, tested implementations of the Extraction schema, the deterministic verdict engine, the registry lookup, and the job-post scan orchestration — not just spec. `starter/` is now **superseded legacy design material**: its Zod schemas and prompt were the seed for `packages/core`'s versions but are no longer imported or kept in sync. Two `starter/` files stay live references, not code: `starter/verdict-cases.md` (the test matrix new verdict-engine tests should trace back to) and `starter/fixtures-posts.json` (the LLM eval fixture set — see "Testing expectations").
 
 ## What LigtasOFW does
 
@@ -12,7 +14,7 @@ Verifies Philippine recruitment agencies against the DMW's licensed-agency regis
 - **Agency check** — **name-only** lookup against a nightly-synced copy of DMW public data (the DMW API exposes no license numbers — ADR-0001; a claimed license number is format-validated only, never a lookup key).
 - **Job-post scan** — paste text/screenshot → vision LLM extracts claims (no separate OCR stage — ADR-0003) → deterministic engine issues the verdict.
 
-Stack: Next.js · TypeScript · Postgres/Drizzle (`pg_trgm` fuzzy search) · OpenRouter open-weights vision LLM (extraction — ADR-0002/0003) · Playwright (endpoint *discovery* only; sync itself is plain fetch) · GitHub Actions (nightly sync + fixture evals in CI).
+Stack: Next.js · TypeScript · Postgres/Drizzle (`pg_trgm` fuzzy search) · OpenRouter open-weights vision LLM (extraction — ADR-0002/0003) · Playwright (endpoint *discovery* only; sync itself is plain fetch) · GitHub Actions (typecheck + tests wired today; nightly sync and fixture-eval CI gating are separate, tracked work).
 
 **`CONTEXT.md` is the project glossary and `docs/adr/` holds the accepted decisions — both are authoritative; use their vocabulary exactly and don't contradict an accepted ADR.**
 
@@ -45,9 +47,9 @@ These are Philippine-recruitment specifics baked into the fixtures and prompt �
 
 ## Data sync (Phase 0)
 
-`dmw.gov.ph` is a catch-all SPA — every path returns the same JS shell, so the JSON data endpoint can only be discovered at runtime. `starter/phase0-capture.ts` drives headless Chromium to record XHR/fetch traffic and dump candidate endpoints. The goal: identify the agencies/job-orders endpoints, then confirm they can be fetched directly (no browser) so ongoing sync is a plain JSON pull. Document findings in `packages/sync/DATA-SOURCES.md`.
+`dmw.gov.ph` is a catch-all SPA — every path returns the same JS shell, so the JSON data endpoint could only be discovered at runtime. Phase 0 discovery already ran: `starter/phase0-capture.ts` drove headless Chromium to record XHR/fetch traffic, and the findings (the agencies/job-orders endpoints, confirmed fetchable without a browser) are recorded in `packages/sync/DATA-SOURCES.md`. `packages/sync/src/index.ts` is still a placeholder — implementing the actual nightly full-replace sync job against those endpoints is separate, tracked work (issue #6), not part of this Phase 0 step.
 
-Run it:
+Re-run discovery only if the DMW SPA changes and the recorded endpoints stop working:
 ```
 npm i -D playwright tsx && npx playwright install chromium
 npx tsx starter/phase0-capture.ts   # writes to phase0-findings/
@@ -55,14 +57,14 @@ npx tsx starter/phase0-capture.ts   # writes to phase0-findings/
 
 ## Testing expectations
 
-- `starter/fixtures-posts.json` is the **LLM eval set** — run it in CI on any prompt/extraction change. Scams use synthetic names only (no real agency defamed). Add real cases from DMW advisories over time.
-- `starter/verdict-cases.md` is the **deterministic test matrix** — registry-lookup cases (R1–R16) and post-scoring cases (P1–P7). Implement the verdict engine table-driven against these.
+- `starter/fixtures-posts.json` is the **LLM eval set** — the fixture data and the verdict-level accuracy metric (`_readme`) are defined, but it does not run in CI yet; wiring a CI gate on it (real Extractor + real verdict engine, ≥90% bar) is separate, tracked work (issue #10), not implemented today. Scams use synthetic names only (no real agency defamed). Add real cases from DMW advisories over time.
+- `starter/verdict-cases.md` is the **deterministic test matrix** — registry-lookup cases (R1–R16) and post-scoring cases (P1–P7). Implemented table-driven in `packages/core/src/{verdict,registry,scan}.test.ts`; new verdict-engine behavior should trace back to a case in this matrix the same way.
 - Few-shot examples belong in the extraction prompt **only if** the default model's zero-shot accuracy on the fixture set is <90% — measure first. The metric is verdict-level (extraction → real verdict engine → compare post verdict), defined in `fixtures-posts.json` `_readme`.
 - The result footer (freshness line + official DMW verify link + hotline) is required on every result; snapshot-test it.
 
 ## Extractor usage (ADR-0002 / ADR-0003)
 
-Extraction uses an **OpenAI-compatible chat call** (provider/model/base URL are env config, never code): `response_format: json_schema` with `zodToJsonSchema(Extraction)` (on OpenRouter set `require_parameters: true`), vision-capable input (pasted text or screenshot — no OCR stage). Default model v1: `google/gemma-4-31b-it:free`; paid fallback Qwen2.5-VL via env var. Validate with `Extraction.safeParse`; for pasted text, drop any flag whose `evidence_quote` isn't a substring of the input. See the call sketch at the bottom of `starter/extraction.ts`.
+Extraction uses an **OpenAI-compatible chat call** (provider/model/base URL are env config, never code): `response_format: json_schema` with `zodToJsonSchema(Extraction)` (on OpenRouter set `require_parameters: true`), vision-capable input (pasted text or screenshot — no OCR stage). Default model v1: `google/gemma-4-31b-it:free`; paid fallback Qwen2.5-VL via env var. Validate with `Extraction.safeParse`; for pasted text, drop any flag whose `evidence_quote` isn't a substring of the input. The real implementation: `apps/web/lib/extractor-client.ts` (the OpenAI-compatible fetch call) and `packages/core/src/scan.ts` (the retry-once-then-degrade wrapper, evidence-guard wiring, and `scanPost` orchestration). `starter/extraction.ts`'s call sketch is the original design reference these were built from.
 
 ## Agent skills
 
