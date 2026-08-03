@@ -1,8 +1,8 @@
 /**
  * CLI entrypoint for the nightly sync (issue #6): `tsx src/run.ts`, wired as the `sync`
  * script and invoked by .github/workflows/sync.yml. Pulls both DMW endpoints sequentially
- * (agencies, then job orders — never in parallel, to stay polite and match the ~15-20 min
- * estimate in DATA-SOURCES.md), maps them, and promotes via stageAndPromote. On any failure
+ * (agencies, then job orders — never in parallel, to stay polite; real runs take ~50 min,
+ * see DATA-SOURCES.md), maps them, and promotes via stageAndPromote. On any failure
  * it prints a remedy specific to the failure cause (the 401 case explicitly has no
  * automatic re-discovery, per the acceptance criteria) and exits non-zero — the calling
  * GitHub Actions workflow is what fails loudly and opens the issue. `sync_metadata` is

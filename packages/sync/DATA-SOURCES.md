@@ -139,8 +139,10 @@ be disciplinary rather than administrative, promote to HIGH_RISK.
 ## Sync strategy (decided 2026-07-25)
 
 - **Full replace, nightly.** All pages of both endpoints (~2,768 requests at 50/page, ~300ms
-  spacing ≈ 15–20 min in GitHub Actions). No delta API exists, and full replace propagates
-  DMW delistings automatically — an upsert sync would keep showing rows DMW removed.
+  spacing). Original estimate was 15–20 min; a real production run against GitHub Actions
+  on 2026-08-03 took ~51 min (real DMW response latency per page, not just the spacing
+  delay, dominates the total). No delta API exists, and full replace propagates DMW
+  delistings automatically — an upsert sync would keep showing rows DMW removed.
 - **Staging-swap:** load into staging tables; promote to live in one transaction only after a
   complete pull. A crashed sync leaves last night's registry serving untouched — stale-but-
   stamped is designed behavior (the Freshness Stamp surfaces it), half-empty is catastrophic
