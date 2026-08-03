@@ -19,6 +19,7 @@ export type {
 export { FLAG_SEVERITY, scorePost, combineVerdict, worstVerdict } from "./verdict";
 export type { RegistryState, RegistryVerdictResult, ClaimedJobOrder } from "./registry";
 export { checkAgency, loadFixtureRegistryState, LICENSE_STATUS_SEVERITY } from "./registry";
+export { loadDbRegistryState } from "./registry-store";
 export { formatDate } from "./format";
 export type { JobOrder } from "@ligtas-ofw/db";
 // Re-exported so apps/web (which depends on core only, never on @ligtas-ofw/db directly)

@@ -6,13 +6,16 @@ vi.mock("@ligtas-ofw/core", async (importOriginal) => {
     ...actual,
     scanPost: vi.fn(),
     checkAndConsumeQuota: vi.fn(),
-    loadFixtureRegistryState: vi.fn(),
   };
 });
 
 vi.mock("../../lib/quota-store", () => ({
   getQuotaStore: vi.fn(),
   readQuotaConfig: vi.fn(),
+}));
+
+vi.mock("../../lib/registry-store", () => ({
+  getRegistryState: vi.fn(),
 }));
 
 vi.mock("../../lib/extractor-client", () => ({
@@ -23,12 +26,13 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => ({ get: () => null })),
 }));
 
-import { checkAndConsumeQuota, loadFixtureRegistryState, scanPost } from "@ligtas-ofw/core";
+import { checkAndConsumeQuota, scanPost } from "@ligtas-ofw/core";
+import { getRegistryState } from "../../lib/registry-store";
 import { scanPostAction } from "./actions";
 
 const scanPostMock = vi.mocked(scanPost);
 const checkAndConsumeQuotaMock = vi.mocked(checkAndConsumeQuota);
-const loadFixtureRegistryStateMock = vi.mocked(loadFixtureRegistryState);
+const getRegistryStateMock = vi.mocked(getRegistryState);
 
 const SYNCED_AT = new Date("2026-07-27T00:00:00.000Z");
 
@@ -46,8 +50,8 @@ function pngFile(bytes = 10, name = "shot.png"): File {
 describe("scanPostAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    loadFixtureRegistryStateMock.mockReturnValue({ syncedAt: SYNCED_AT } as unknown as ReturnType<
-      typeof loadFixtureRegistryState
+    getRegistryStateMock.mockResolvedValue({ syncedAt: SYNCED_AT } as unknown as Awaited<
+      ReturnType<typeof getRegistryState>
     >);
     checkAndConsumeQuotaMock.mockResolvedValue({ kind: "ok" } as unknown as Awaited<ReturnType<typeof checkAndConsumeQuota>>);
     scanPostMock.mockResolvedValue({ kind: "not_a_job_post" });

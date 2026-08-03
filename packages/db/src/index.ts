@@ -13,6 +13,7 @@ export { normalizeAgencyName } from "./normalize";
 export { trigramSimilarity } from "./similarity";
 export { createDbClient } from "./client";
 export { countScanEvents, recordScanEvent, resetScanQuotaEvents } from "./quota";
+export { getAllAgencies, getAllJobOrders, getLatestSyncedAt } from "./registry-query";
 export { TEST_DATABASE_URL, IS_CI, SKIP_INTEGRATION, connectTestDb } from "./test-support";
 export { loadRegistrySnapshot, toAgencyRows, toJobOrderRows } from "./fixtures";
 export type { RegistrySnapshot, RawAgency, RawJobOrder } from "./fixtures";

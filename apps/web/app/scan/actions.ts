@@ -1,9 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
-import { checkAndConsumeQuota, loadFixtureRegistryState, scanPost, type ScanInput, type ScanResult } from "@ligtas-ofw/core";
+import { checkAndConsumeQuota, scanPost, type ScanInput, type ScanResult } from "@ligtas-ofw/core";
 import { openRouterExtractorClient } from "../../lib/extractor-client";
 import { getQuotaStore, readQuotaConfig } from "../../lib/quota-store";
+import { getRegistryState } from "../../lib/registry-store";
 import { validateAndEncodeImage, type ImageValidationError } from "../../lib/image-upload";
 
 export type ScanActionState =
@@ -42,7 +43,7 @@ export async function scanPostAction(
     scanInput = { kind: "text", text };
   }
 
-  const registryState = loadFixtureRegistryState();
+  const registryState = await getRegistryState();
 
   // Checked and incremented before any Extractor call — an exhausted budget never
   // reaches the provider (issue #11).

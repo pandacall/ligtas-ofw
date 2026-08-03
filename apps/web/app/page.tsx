@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { checkAgency, loadFixtureRegistryState } from "@ligtas-ofw/core";
+import { checkAgency } from "@ligtas-ofw/core";
 import { ResultCard } from "./components/ResultCard";
+import { getRegistryState } from "../lib/registry-store";
 
 export default async function HomePage({
   searchParams,
@@ -29,7 +30,7 @@ export default async function HomePage({
         <input id="position" name="position" type="text" defaultValue={claimedPosition ?? ""} />
         <button type="submit">Check</button>
       </form>
-      {query && <ResultCard result={checkAgency(query, loadFixtureRegistryState(), new Date(), claim)} />}
+      {query && <ResultCard result={checkAgency(query, await getRegistryState(), new Date(), claim)} />}
       <p>
         <Link href="/scan">Scan a job post instead</Link>
       </p>
