@@ -37,7 +37,8 @@ async function fetchPage<T>(endpoint: string, page: number, apiKey: string, fetc
       },
     });
   } catch (err) {
-    throw new SyncError("network", `${endpoint} page ${page}: request failed — ${err instanceof Error ? err.message : String(err)}`);
+    const cause = err instanceof Error && err.cause ? ` (cause: ${String(err.cause)})` : "";
+    throw new SyncError("network", `${endpoint} page ${page}: request failed — ${err instanceof Error ? err.message : String(err)}${cause}`);
   }
 
   if (response.status === 401) {
