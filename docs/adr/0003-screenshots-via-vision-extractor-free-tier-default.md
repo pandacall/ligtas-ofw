@@ -4,6 +4,8 @@
 - Date: 2026-07-25
 - Amends ADR-0002 (supersedes its "Model v1: Qwen2.5-72B-Instruct" line; the adapter,
   provider, and safety-net decisions there stand unchanged).
+- See ADR-0004 for a later amendment: the "Model default v1" line below (`google/gemma-4-31b-it:free`)
+  is superseded by `google/gemma-4-26b-a4b-it:free`; everything else here stands unchanged.
 
 ## Context
 

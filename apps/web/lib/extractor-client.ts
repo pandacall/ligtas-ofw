@@ -19,7 +19,7 @@ function requireEnv(name: string): string {
 export function createOpenRouterExtractorClient(options: { temperature?: number } = {}): ExtractorClient {
   return async (messages: ExtractorMessage[]) => {
     const apiKey = requireEnv("EXTRACTOR_API_KEY");
-    const model = process.env.EXTRACTOR_MODEL ?? "google/gemma-4-31b-it:free";
+    const model = process.env.EXTRACTOR_MODEL ?? "google/gemma-4-26b-a4b-it:free";
     const baseUrl = process.env.EXTRACTOR_BASE_URL ?? "https://openrouter.ai/api/v1";
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
