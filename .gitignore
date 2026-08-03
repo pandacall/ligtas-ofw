@@ -16,3 +16,5 @@ coverage/
 
 # local tooling
 .claude/settings.local.json
+
+.vercel
