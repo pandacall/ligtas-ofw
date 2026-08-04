@@ -1,9 +1,9 @@
 /**
  * Trigram string similarity, modeled on Postgres's pg_trgm extension (ADR-0001: agency
- * lookup is exact-normalized, then pg_trgm fuzzy). There is no live DB yet (see
- * loadFixtureRegistryState in @ligtas-ofw/core), so this is a pure-TS stand-in over the same
- * normalized_name column pg_trgm indexes in schema.ts — the seam that swaps to a real SQL
- * `similarity()` query once live DB lands (#6/#12).
+ * lookup is exact-normalized, then pg_trgm fuzzy). checkAgency() (@ligtas-ofw/core) still
+ * scores fuzzy matches in-app with this rather than a live SQL `similarity()` query against
+ * the normalized_name column pg_trgm indexes in schema.ts — swapping to that real query is
+ * tracked in issue #24.
  *
  * Uses the Dice coefficient rather than pg_trgm's literal Jaccard formula: Jaccard
  * under-scores a short abbreviated query against a long canonical name (e.g. "XYZ Intl

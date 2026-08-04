@@ -44,9 +44,10 @@ export type RegistryVerdictResult =
 // 2026-07-27. Trigram similarity modeled on pg_trgm; see @ligtas-ofw/db's trigramSimilarity —
 // it deliberately uses a Dice coefficient rather than pg_trgm's literal Jaccard formula (see
 // that module's docstring for why). These two numbers were calibrated against that Dice
-// formula, not against real pg_trgm. When a live DB lands (#6/#12) and this swaps to a real
-// SQL `similarity()` query, re-run R4/R5/R6/R16 against the live Jaccard-based scores first —
-// they will likely differ and these thresholds may need to move.
+// formula, not against real pg_trgm. checkAgency() still scores in-app against the full
+// table rather than issuing a live SQL `similarity()` query — swapping to that (and
+// re-validating R4/R5/R6/R16 against the live Jaccard-based scores, which will likely
+// differ) is tracked separately in issue #24.
 const FUZZY_MATCH_THRESHOLD = 0.55; // >= this: auto-match, "matched to: <canonical>"
 const FUZZY_SUGGEST_THRESHOLD = 0.4; // >= this (but below the match threshold): did-you-mean
 const DID_YOU_MEAN_LIMIT = 3;
@@ -219,9 +220,10 @@ export function checkAgency(
   };
 }
 
-// Fixture-backed RegistryState for surfaces (no live DB provisioned yet — see issue
-// #6/#12). This is the one seam that swaps to a live DB query once one exists; callers
-// only ever depend on checkAgency + RegistryState, never on how the state was loaded.
+// Fixture-backed RegistryState — test-only now. Production loads RegistryState from the
+// live Postgres registry via registry-store.ts's loadDbRegistryState() (issues #6/#12,
+// shipped 2026-07-27 / 2026-08-03). Callers only ever depend on checkAgency + RegistryState,
+// never on how the state was loaded.
 export function loadFixtureRegistryState(): RegistryState {
   const snapshot = loadRegistrySnapshot();
   return {
