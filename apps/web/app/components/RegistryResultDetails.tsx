@@ -106,9 +106,9 @@ function JobOrdersSection({ jobOrders, claimedMatch }: { jobOrders: JobOrder[]; 
   return (
     <section className="mt-4 border-t-2 border-dashed border-paper-edge pt-3">
       <SectionLabel>
-        Job Orders
+        {"Job Orders "}
         {jobOrders.length > 0 && (
-          <span className="ml-1.5 font-normal normal-case tracking-normal text-ink-soft">
+          <span className="font-normal normal-case tracking-normal text-ink-soft">
             {hidden > 0 ? `— ${shown.length} sa ${jobOrders.length}` : `— ${jobOrders.length}`}
           </span>
         )}
