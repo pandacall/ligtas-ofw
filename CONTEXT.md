@@ -98,6 +98,55 @@ per-IP sliding-window scan limit. Distinct from Quota Exhausted (the shared dail
 "try again shortly" message; no manual-search links needed since this is transient.
 _Avoid_: quota exhausted, blocked, throttled.
 
+### Chat Surface (ADR-0005)
+
+**Bantatay**:
+The assistant persona of the Web Surface — *Bantay* (guardian) + *Tatay* (father). A name for
+the voice, never for the judgment: Bantatay speaks, the verdict engine adjudicates. Rendered
+in soft chat bubbles, visually distinct from the Record Card a verdict arrives on.
+_Avoid_: the bot, the assistant, the AI, LigtasOFW (that is the product, not the persona).
+
+**Turn**:
+One exchange in the chat: a user input (text, screenshot, or Quick Action) and Bantatay's
+response. `handleTurn` in Core owns it end to end.
+_Avoid_: message, request, query.
+
+**Route**:
+The decision about what a Turn is asking for — one of `agency_check`, `scan_post`, `advice`,
+or `out_of_scope`. Decided by the deterministic pre-router where possible, and only by the
+Router LLM when the intent genuinely needs reading.
+_Avoid_: intent detection, classification, dispatch.
+
+**Router**:
+The LLM that classifies an ambiguous Turn. Distinct from the **Extractor** (which reads job
+posts). It returns a Route, an optional agency name, and Advisor KB ids — never facts of its
+own, and never a verdict. Its free-text lead-in may contain no digits.
+_Avoid_: agent, orchestrator, tool caller.
+
+**Advisor KB**:
+The hand-written, cited corpus behind advice Turns, held as data in Core. The Router *selects*
+entries by id; the Surface renders their text verbatim with their source link. Every entry has
+a source URL — an uncitable answer is not shipped.
+_Avoid_: knowledge base, RAG, docs, FAQ.
+
+**Quick Action**:
+A chip carrying its own Route, so it costs no LLM call. Also the working path when the chat
+budget is spent.
+_Avoid_: button, shortcut, suggestion.
+
+**Record Card**:
+The document a verdict is delivered on — manila stock, mono record fields, and exactly one
+Verdict Stamp. A registry verdict nested inside a job-post scan renders as a quiet inline
+badge instead, so it can never appear to argue against the card's own verdict.
+_Avoid_: result card, verdict box, panel.
+
+**Router Unavailable**:
+An escape-hatch state (not a point on the severity scale) when the chat routing budget is
+spent or the Router failed validation twice. Distinct from Quota Exhausted: the deterministic
+paths — Quick Actions, the Agency check, keyword-matched advice — all still work, so the copy
+points at those rather than at tomorrow. Never a guessed Route.
+_Avoid_: quota exhausted, error, offline.
+
 ### Registry & data
 
 **Agency**:

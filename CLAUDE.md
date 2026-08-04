@@ -4,15 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-The workspace is scaffolded: an npm-workspaces monorepo with four modules — `packages/db` (Drizzle schema + client), `packages/core` (extraction schemas + prompt, verdict engine, registry lookup — zero Next.js/HTTP imports, mechanically enforced by `scripts/check-core-boundary.ts`), `packages/sync` (nightly registry sync, implemented and running nightly via GitHub Actions — see "Data sync" below), and `apps/web` (the Next.js Surface). TypeScript and vitest are wired at the root (`npm run typecheck`, `npm test`); CI runs both on every push/PR.
+The workspace is scaffolded: an npm-workspaces monorepo with four modules — `packages/db` (Drizzle schema + client), `packages/core` (extraction schemas + prompt, verdict engine, registry lookup, chat routing — zero Next.js/HTTP imports, mechanically enforced by `scripts/check-core-boundary.ts`), `packages/sync` (nightly registry sync, implemented and running nightly via GitHub Actions — see "Data sync" below), and `apps/web` (the Next.js Surface). TypeScript and vitest are wired at the root (`npm run typecheck`, `npm test`); CI runs both on every push/PR.
 
-`packages/core/src/{extraction,verdict,registry,scan,copy}.ts` are the real, tested implementations of the Extraction schema, the deterministic verdict engine, the registry lookup, and the job-post scan orchestration — not just spec. `starter/` is now **superseded legacy design material**: its Zod schemas and prompt were the seed for `packages/core`'s versions but are no longer imported or kept in sync. Two `starter/` files stay live references, not code: `starter/verdict-cases.md` (the test matrix new verdict-engine tests should trace back to) and `starter/fixtures-posts.json` (the LLM eval fixture set — see "Testing expectations").
+`packages/core/src/{extraction,verdict,registry,scan,copy}.ts` are the real, tested implementations of the Extraction schema, the deterministic verdict engine, the registry lookup, and the job-post scan orchestration — not just spec. `packages/core/src/{advisor-kb,chat-route,router,chat}.ts` add the chat Surface's engine (ADR-0005): the cited advice corpus, the Router schema and its guards, the deterministic pre-router, and `handleTurn`.
+
+`apps/web` uses Tailwind v4 (tokens live in `app/globals.css`'s `@theme` block) with no component library. Design direction: the conversation is warm and human, verdicts arrive as stamped manila Record Cards. Verdict colours are tuned against the manila stock they sit on, not against white — re-check contrast there if you change them. `starter/` is now **superseded legacy design material**: its Zod schemas and prompt were the seed for `packages/core`'s versions but are no longer imported or kept in sync. Two `starter/` files stay live references, not code: `starter/verdict-cases.md` (the test matrix new verdict-engine tests should trace back to) and `starter/fixtures-posts.json` (the LLM eval fixture set — see "Testing expectations").
 
 ## What LigtasOFW does
 
-Verifies Philippine recruitment agencies against the DMW's licensed-agency registry and scans overseas job posts (usually Taglish) for illegal-recruitment red flags. Two surfaces:
-- **Agency check** — **name-only** lookup against a nightly-synced copy of DMW public data (the DMW API exposes no license numbers — ADR-0001; a claimed license number is format-validated only, never a lookup key).
+Verifies Philippine recruitment agencies against the DMW's licensed-agency registry and scans overseas job posts (usually Taglish) for illegal-recruitment red flags. Two capabilities:
+- **Agency check** — **name-only** lookup against a nightly-synced copy of DMW public data (the DMW API exposes no license numbers — ADR-0001; a claimed license number is format-validated only, never a lookup key). No LLM involved.
 - **Job-post scan** — paste text/screenshot → vision LLM extracts claims (no separate OCR stage — ADR-0003) → deterministic engine issues the verdict.
+
+Both are reached through **one conversational Surface** — the assistant persona is **Bantatay** (ADR-0005). There is no separate agency-check page or scan page; `/` is the chat, and the two capabilities are things the conversation does. A third capability, **advice**, answers general questions (fee rules, what to do after being scammed, hotlines) from a hand-written cited corpus.
 
 Stack: Next.js · TypeScript · Postgres/Drizzle (`pg_trgm` fuzzy search) · OpenRouter open-weights vision LLM (extraction — ADR-0002/0003) · Playwright (endpoint *discovery* only; sync itself is plain fetch) · GitHub Actions (typecheck + tests wired today; nightly sync and fixture-eval CI gating are separate, tracked work).
 
@@ -32,7 +36,9 @@ These rules are the whole point of the product. Violating them is a correctness 
 
 5. **Cache is the product.** User queries hit the local Postgres copy, never DMW servers. Every result shows a data-freshness stamp and a link to verify on the official DMW site.
 
-6. **Degrade, never fabricate.** If extraction fails Zod validation, retry once with the error appended, then return `UNANALYZABLE` / `{ analyzable: false }` with manual-search links. Never guess a verdict.
+6. **Degrade, never fabricate.** If extraction fails Zod validation, retry once with the error appended, then return `UNANALYZABLE` / `{ analyzable: false }` with manual-search links. Never guess a verdict. The Router (ADR-0005) follows the identical shape: validate → retry once → `router_unavailable`, never a guessed route.
+
+7. **The Router selects; it never authors.** The chat's Router LLM returns a route, an agency name, and Advisor KB *ids* — the Surface renders those entries' hand-written text verbatim. Its free-text lead-in **may contain no digits**: every hotline, fee cap, date, and license number must come from the KB or a deterministic card, because a digit in model prose means it invented one. Enforced in `chat-route.ts`, tested in `chat-route.test.ts`.
 
 ## Domain rules the verdict engine must encode
 
@@ -61,10 +67,19 @@ npx tsx starter/phase0-capture.ts   # writes to phase0-findings/
 - `starter/verdict-cases.md` is the **deterministic test matrix** — registry-lookup cases (R1–R16) and post-scoring cases (P1–P7). Implemented table-driven in `packages/core/src/{verdict,registry,scan}.test.ts`; new verdict-engine behavior should trace back to a case in this matrix the same way.
 - Few-shot examples belong in the extraction prompt **only if** the default model's zero-shot accuracy on the fixture set is <90% — measure first. The metric is verdict-level (extraction → real verdict engine → compare post verdict), defined in `fixtures-posts.json` `_readme`.
 - The result footer (freshness line + official DMW verify link + hotline) is required on every result; snapshot-test it.
+- The chat Surface's guards are table-driven in `packages/core/src/{advisor-kb,chat-route,router,chat}.test.ts`. Two carry real weight: every Advisor KB entry must have a unique id and a non-empty `source` URL, and a Router `reply` containing a digit must be rejected. Surface-level concerns (form parsing, file validation, which budget a turn draws from) live in `apps/web/app/actions/chat.test.ts` against a mocked `handleTurn`, so the engine is tested once, in Core.
 
 ## Extractor usage (ADR-0002 / ADR-0003)
 
 Extraction uses an **OpenAI-compatible chat call** (provider/model/base URL are env config, never code): `response_format: json_schema` with `zodToJsonSchema(Extraction)` (on OpenRouter set `require_parameters: true`), vision-capable input (pasted text or screenshot — no OCR stage). Default model v1: `google/gemma-4-26b-a4b-it:free` (ADR-0004 — changed from `gemma-4-31b-it:free`, which has only one backing provider and hit sustained upstream rate-limiting); paid fallback Qwen2.5-VL via env var. Validate with `Extraction.safeParse`; for pasted text, drop any flag whose `evidence_quote` isn't a substring of the input — screenshots skip this guard (no source text to verify against; ADR-0003 accepts the model's transcription as-is). The real implementation: `apps/web/lib/extractor-client.ts` (the OpenAI-compatible fetch call) and `packages/core/src/scan.ts` (the retry-once-then-degrade wrapper, evidence-guard wiring, and `scanPost` orchestration). `starter/extraction.ts`'s call sketch is the original design reference these were built from.
+
+## Router usage (ADR-0005)
+
+The chat's Router is a **second, separate LLM role** — do not confuse it with the Extractor. It runs the same OpenAI-compatible `response_format: json_schema` call (`apps/web/lib/router-client.ts` mirrors `extractor-client.ts`), text-only, temperature 0, against `ChatRoute`. Deliberately **not** native tool calling — ADR-0004 records free-tier flakiness, and structured JSON is the mechanism already measured at 95% here.
+
+Two rules when touching this path:
+- **Spend nothing you don't have to.** `routeTurn` (`router.ts`) is pure and resolves most turns with zero LLM calls; only `needs_router` decisions consume the chat budget. Adding an LLM call to a turn the pre-router could have handled is a regression.
+- **Never let the Router's prose carry a fact.** See invariant 7. New guards belong in `chat-route.ts`'s `toSafeRoute`, with a case in `chat-route.test.ts`.
 
 ## Agent skills
 
