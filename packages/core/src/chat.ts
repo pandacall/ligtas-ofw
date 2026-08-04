@@ -19,6 +19,7 @@ import {
   type RouterClient,
   type RouterMessage,
 } from "./chat-route";
+import { renderHistory, type ChatHistoryEntry } from "./chat-history";
 import { ROUTER_UNAVAILABLE_COPY } from "./copy";
 import type { QuotaCheckResult } from "./quota";
 import { checkAgency, type RegistryState, type RegistryVerdictResult } from "./registry";
@@ -74,9 +75,15 @@ async function callRouter(router: RouterClient, messages: RouterMessage[]): Prom
  * the same reason: a third attempt costs budget we do not have, and a guessed route is worse
  * than an honest "I did not understand that."
  */
-export async function runRouter(text: string, router: RouterClient): Promise<ChatRoute | null> {
+export async function runRouter(
+  text: string,
+  router: RouterClient,
+  history: readonly ChatHistoryEntry[] = [],
+): Promise<ChatRoute | null> {
+  const context = renderHistory(history);
   const messages: RouterMessage[] = [
     { role: "system", content: ROUTER_SYSTEM_PROMPT },
+    ...(context ? [{ role: "user" as const, content: context }] : []),
     { role: "user", content: text },
   ];
 
@@ -157,7 +164,7 @@ export async function handleTurn(input: ChatTurnInput, deps: ChatTurnDeps): Prom
     return { kind: "router_unavailable", reply: ROUTER_UNAVAILABLE_COPY };
   }
 
-  const route = await runRouter(input.text ?? "", deps.router);
+  const route = await runRouter(input.text ?? "", deps.router, input.history ?? []);
   if (route === null) {
     return { kind: "router_unavailable", reply: ROUTER_UNAVAILABLE_COPY };
   }

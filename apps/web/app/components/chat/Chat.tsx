@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { ChatTurnResult, QuickAction } from "@ligtas-ofw/core";
+// Imported from the leaf module, not the package index: this is a client component, so a
+// value import from the index would bundle createDbClient — and therefore pg — into the
+// browser build. See packages/core/src/chat-history.ts.
+import {
+  HISTORY_LIMIT,
+  summarizeTurnResult,
+  type ChatHistoryEntry,
+} from "@ligtas-ofw/core/chat-history";
 import { BANTATAY_GREETING } from "@ligtas-ofw/core/copy";
 import { chatTurnAction, type ChatActionState } from "../../actions/chat";
 import { MAX_IMAGE_BYTES, type ImageValidationError } from "../../../lib/image-upload";
@@ -50,6 +58,9 @@ export function Chat() {
 
   const send = useCallback(
     (input: { text: string; image: File | null; action?: QuickAction }) => {
+      // Built from what is already on screen, before this turn's own message is appended.
+      const history = toHistory(messages);
+
       append({ role: "user", text: input.text || undefined, imageName: input.image?.name });
       setPendingChip(null);
 
@@ -57,6 +68,7 @@ export function Chat() {
       if (input.text) formData.set("text", input.text);
       if (input.image) formData.set("image", input.image);
       if (input.action) formData.set("action", input.action);
+      if (history.length > 0) formData.set("history", JSON.stringify(history));
 
       startTransition(async () => {
         let state: ChatActionState;
@@ -82,7 +94,7 @@ export function Chat() {
         append({ role: "bantatay", turn: state.result, syncedAt: state.syncedAt });
       });
     },
-    [append],
+    [append, messages],
   );
 
   function selectChip(chip: ChipSpec) {
@@ -135,6 +147,30 @@ export function Chat() {
       />
     </div>
   );
+}
+
+/**
+ * Turns the on-screen conversation into the digest sent with the next request, so a follow-up
+ * like "oo" or "paano yung fee nila?" has a referent (ADR-0005).
+ *
+ * Derived from `messages` rather than kept as separate state — one source of truth, and what
+ * the Router sees can never drift from what the user is looking at. Only the tail is sent;
+ * core clamps and truncates again server-side, since this input is client-supplied.
+ */
+function toHistory(messages: Message[]): ChatHistoryEntry[] {
+  const entries: ChatHistoryEntry[] = [];
+  for (const message of messages) {
+    if (message.role === "user") {
+      // An image-only turn has no text worth digesting; name the act instead.
+      const content = message.text ?? (message.imageName ? "sent a screenshot of a job post" : "");
+      if (content) entries.push({ role: "user", content });
+      continue;
+    }
+    if (message.isError || !message.turn) continue;
+    const summary = summarizeTurnResult(message.turn);
+    if (summary) entries.push({ role: "bantatay", content: summary });
+  }
+  return entries.slice(-HISTORY_LIMIT);
 }
 
 /**

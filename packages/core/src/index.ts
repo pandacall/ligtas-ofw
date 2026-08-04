@@ -47,6 +47,10 @@ export type { ChatTurnInput, QuickAction, RouteDecision } from "./router";
 export { SCAN_TEXT_CHARS, routeTurn } from "./router";
 export type { ChatTurnDeps, ChatTurnResult } from "./chat";
 export { handleTurn, runRouter } from "./chat";
+export type { ChatHistoryEntry } from "./chat-history";
+export { HISTORY_LIMIT, HISTORY_CONTENT_LIMIT, clampHistory, renderHistory, summarizeTurnResult } from "./chat-history";
+// Zod validation lives apart from chat-history.ts so the client bundle stays zod-free.
+export { ChatHistory, ChatHistoryEntrySchema } from "./chat-history-schema";
 export {
   FLAG_COPY,
   VERDICT_BANNER,

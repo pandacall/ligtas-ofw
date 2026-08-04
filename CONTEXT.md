@@ -123,6 +123,13 @@ posts). It returns a Route, an optional agency name, and Advisor KB ids — neve
 own, and never a verdict. Its free-text lead-in may contain no digits.
 _Avoid_: agent, orchestrator, tool caller.
 
+**History Digest**:
+A compact, one-line-per-turn summary of the recent conversation, sent with an ambiguous Turn so
+the Router can resolve references ("oo", "nila", "yun"). Carries the *subject* of past Turns and
+never their verdict, and never the raw text of a scanned Job Post. Lives in the browser, sent
+per request, never persisted.
+_Avoid_: chat history, transcript, memory, context window.
+
 **Advisor KB**:
 The hand-written, cited corpus behind advice Turns, held as data in Core. The Router *selects*
 entries by id; the Surface renders their text verbatim with their source link. Every entry has

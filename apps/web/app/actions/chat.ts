@@ -2,8 +2,11 @@
 
 import { headers } from "next/headers";
 import {
+  ChatHistory,
   checkAndConsumeQuota,
+  clampHistory,
   handleTurn,
+  type ChatHistoryEntry,
   type ChatTurnResult,
   type QuickAction,
   type QuotaCheckResult,
@@ -30,6 +33,19 @@ const QUICK_ACTIONS: readonly QuickAction[] = [
 function parseAction(raw: FormDataEntryValue | null): QuickAction | undefined {
   const value = typeof raw === "string" ? raw : "";
   return (QUICK_ACTIONS as readonly string[]).includes(value) ? (value as QuickAction) : undefined;
+}
+
+// History arrives as JSON from the browser, so it is parsed defensively and clamped: malformed
+// or oversized history degrades to no history rather than failing the turn, and never inflates
+// the routing prompt beyond HISTORY_LIMIT entries.
+function parseHistory(raw: FormDataEntryValue | null): ChatHistoryEntry[] {
+  if (typeof raw !== "string" || !raw) return [];
+  try {
+    const parsed = ChatHistory.safeParse(JSON.parse(raw));
+    return parsed.success ? clampHistory(parsed.data) : [];
+  } catch {
+    return [];
+  }
 }
 
 // x-forwarded-for's first entry is the original client IP (Vercel sets this). No header
@@ -71,7 +87,7 @@ export async function chatTurnAction(_prevState: ChatActionState, formData: Form
   };
 
   const result = await handleTurn(
-    { text: text || undefined, imageDataUrl, action },
+    { text: text || undefined, imageDataUrl, action, history: parseHistory(formData.get("history")) },
     {
       router: openRouterRouterClient,
       extractor: openRouterExtractorClient,

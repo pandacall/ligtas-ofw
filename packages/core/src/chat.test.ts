@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { ChatRoute, RouterClient, RouterMessage } from "./chat-route";
 import { ROUTER_UNAVAILABLE_COPY } from "./copy";
 import { handleTurn, runRouter, type ChatTurnDeps } from "./chat";
+import { summarizeTurnResult } from "./chat-history";
+import { resolveKbIds } from "./advisor-kb";
 import type { RegistryState } from "./registry";
 import type { QuotaCheckResult } from "./quota";
 import type { ExtractorClient } from "./scan";
@@ -275,6 +277,119 @@ describe("handleTurn — chat budget exhaustion", () => {
 
     const advice = await handleTurn({ text: "magkano ang placement fee?" }, deps);
     expect(advice.kind).toBe("advice");
+  });
+});
+
+describe("summarizeTurnResult — the history digest", () => {
+  it("names the agency an agency_check was about", () => {
+    const summary = summarizeTurnResult({
+      kind: "agency_check",
+      reply: "",
+      query: "ABC Manpower Services",
+      registry: { kind: "not_found", verdict: "HIGH_RISK", reasons: [], syncedAt: SYNCED_AT },
+    });
+    expect(summary).toContain("ABC Manpower Services");
+  });
+
+  // The load-bearing guarantee (ADR-0005): the digest carries the SUBJECT, never the OUTCOME.
+  // Handing the Router a past verdict would invite it to restate one, which invariant 1 forbids.
+  it("never leaks a verdict, for any verdict value", () => {
+    for (const verdict of ["VERIFIED", "CAUTION", "HIGH_RISK"] as const) {
+      const summary =
+        summarizeTurnResult({
+          kind: "agency_check",
+          reply: "",
+          query: "ABC Manpower",
+          registry: { kind: "not_found", verdict: "HIGH_RISK", reasons: [], syncedAt: SYNCED_AT },
+        }) ?? "";
+      expect(summary).not.toContain(verdict);
+    }
+  });
+
+  it("never leaks the scanned post's text or its verdict", () => {
+    const summary =
+      summarizeTurnResult({
+        kind: "scan",
+        reply: "",
+        result: {
+          kind: "scored",
+          verdict: "HIGH_RISK",
+          post: {
+            kind: "scored",
+            verdict: "HIGH_RISK",
+            flags: [{ flag: "upfront_fee", tier: "CRITICAL", evidence: "Processing fee 15,000 via GCash" }],
+            reasons: [],
+          },
+        },
+      }) ?? "";
+    expect(summary).not.toContain("GCash");
+    expect(summary).not.toContain("15,000");
+    expect(summary).not.toContain("HIGH_RISK");
+  });
+
+  it("names the topics an advice turn covered", () => {
+    const summary = summarizeTurnResult({
+      kind: "advice",
+      reply: "",
+      entries: resolveKbIds(["placement-fee-cap"]),
+    });
+    expect(summary).toContain("placement fee");
+  });
+
+  it("returns null for turns with nothing to refer back to", () => {
+    expect(summarizeTurnResult({ kind: "out_of_scope", reply: "x" })).toBeNull();
+    expect(summarizeTurnResult({ kind: "router_unavailable", reply: "x" })).toBeNull();
+    expect(summarizeTurnResult({ kind: "empty" })).toBeNull();
+    expect(summarizeTurnResult({ kind: "advice", reply: "", entries: [] })).toBeNull();
+  });
+});
+
+describe("handleTurn — conversational context", () => {
+  const history = [
+    { role: "user" as const, content: "legit ba ang ABC Manpower Services?" },
+    { role: "bantatay" as const, content: 'showed the DMW registry record for the agency "ABC Manpower Services"' },
+  ];
+
+  it("passes the history to the Router so a bare reply has a referent", async () => {
+    const router = routerReturning({ intent: "advice", kb_ids: ["placement-fee-cap"] });
+    await handleTurn({ text: "paano yung fee nila?", history }, makeDeps({ router }));
+
+    const messages = (router as ReturnType<typeof vi.fn>).mock.calls[0]![0] as RouterMessage[];
+    // system + context + current turn
+    expect(messages).toHaveLength(3);
+    expect(messages[1]?.content).toContain("ABC Manpower Services");
+    expect(messages[2]?.content).toBe("paano yung fee nila?");
+  });
+
+  it("sends no context message when there is no history", async () => {
+    const router = routerReturning({ intent: "out_of_scope" });
+    await handleTurn({ text: "tulungan mo ako" }, makeDeps({ router }));
+
+    const messages = (router as ReturnType<typeof vi.fn>).mock.calls[0]![0] as RouterMessage[];
+    expect(messages).toHaveLength(2);
+  });
+
+  it("lets a bare 'oo' resolve into a real route instead of out_of_scope", async () => {
+    const router = routerReturning({
+      intent: "agency_check",
+      agency_name: "ABC Manpower Services",
+      reply: "Sige, i-check natin.",
+    });
+    const result = await handleTurn({ text: "oo", history }, makeDeps({ router }));
+
+    expect(result.kind).toBe("agency_check");
+    if (result.kind !== "agency_check") throw new Error("unreachable");
+    expect(result.query).toBe("ABC Manpower Services");
+  });
+
+  // History must never buy a turn that the pre-router already resolved for free.
+  it("does not spend a Router call on a turn history is irrelevant to", async () => {
+    const deps = makeDeps();
+    const result = await handleTurn({ text: "magkano ang placement fee?", history }, deps);
+
+    expect(result.kind).toBe("advice");
+    expect(deps.router).not.toHaveBeenCalled();
+    expect(deps.consumeChatBudget).not.toHaveBeenCalled();
   });
 });
 

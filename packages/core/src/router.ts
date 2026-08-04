@@ -9,6 +9,7 @@
  * minutes.
  */
 import { matchKbEntries, resolveKbIds, type KbEntry } from "./advisor-kb";
+import type { ChatHistoryEntry } from "./chat-history";
 
 /**
  * A chip the user tapped. Chips carry their intent explicitly, so they never cost an LLM
@@ -28,6 +29,12 @@ export type ChatTurnInput = {
   /** A base64 data URL, already validated by the Surface. Always means a scan. */
   imageDataUrl?: string;
   action?: QuickAction;
+  /**
+   * A digest of recent turns, used only to resolve references in an ambiguous turn ("oo",
+   * "paano yung fee nila?"). routeTurn ignores it — the deterministic paths never need it, and
+   * a turn resolved here costs no Router call regardless of how much history came with it.
+   */
+  history?: readonly ChatHistoryEntry[];
 };
 
 export type RouteDecision =

@@ -62,7 +62,28 @@ enforce it:
   prose. A digit means invention, so the whole reply is replaced with canned copy;
 - `reply` is capped and only ever rendered as a lead-in *above* a card, never in place of one.
 
-### 4. The two LLM roles are metered separately
+### 4. The Router sees a digest of recent turns, carrying subjects but never outcomes
+
+The Router classifies one turn at a time, which initially made a bare "oo" or a pronoun
+("paano yung fee nila?") unresolvable — the referent lived in a turn the Router never saw. A
+compact digest of the last few turns now travels with an ambiguous turn.
+
+Two rules bound what a digest may contain:
+
+- **Never the raw content of a scanned post.** A pasted advertisement can run to thousands of
+  characters; replaying it into later routing calls would be expensive and pointless. One short
+  line per turn, truncated and whitespace-collapsed.
+- **Never a verdict.** Reference resolution needs the *subject* of an earlier turn, not its
+  *outcome* — "the agency you asked about" is what makes "nila" resolvable. Telling the Router
+  "you returned HIGH_RISK for X" would hand it the conclusion and invite it to restate one in
+  prose, which invariant 1 forbids. Withholding the outcome removes the temptation instead of
+  relying on the prompt to resist it.
+
+The digest is built in the browser from the messages already on screen, sent with each request,
+validated and re-clamped server-side, and never persisted. Turns the pre-router resolves stay
+free regardless of how much history accompanies them.
+
+### 5. The two LLM roles are metered separately
 
 `scan_quota_events` gains a `kind` column (`'scan' | 'chat'`, default `'scan'`). Vision
 extraction keeps `SCAN_DAILY_BUDGET=50`; text routing gets its own `CHAT_DAILY_BUDGET=500`.
