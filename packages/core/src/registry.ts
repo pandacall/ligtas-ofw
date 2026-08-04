@@ -191,12 +191,22 @@ export function checkAgency(
   }
 
   if (strongMatches.length > 1) {
-    // R16: two (or more) equally strong candidates — never auto-pick, show them all.
+    // R16: two (or more) equally strong candidates — never auto-pick.
+    //
+    // Capped like the R5 branch below. A query built from generic industry words ("manpower
+    // services", "international") can clear the match threshold against dozens of real rows,
+    // and a list that long is unreadable — worse, it reads as corroboration rather than as a
+    // failure to identify anything. The count is stated rather than silently truncated.
+    const shown = strongMatches.slice(0, DID_YOU_MEAN_LIMIT);
+    const hidden = strongMatches.length - shown.length;
     return {
       kind: "ambiguous",
       verdict: "CAUTION",
-      reasons: [`multiple close matches for "${query}" — did you mean one of these?`],
-      candidates: strongMatches.map((candidate) => candidate.agency),
+      reasons: [
+        `multiple close matches for "${query}" — did you mean one of these?` +
+          (hidden > 0 ? ` (showing the ${shown.length} closest of ${strongMatches.length})` : ""),
+      ],
+      candidates: shown.map((candidate) => candidate.agency),
       syncedAt: state.syncedAt,
     };
   }

@@ -126,6 +126,27 @@ describe("ROUTER_SYSTEM_PROMPT", () => {
     expect(ROUTER_SYSTEM_PROMPT).toMatch(/NO DIGITS/);
     expect(ROUTER_SYSTEM_PROMPT).toMatch(/Never state or imply a verdict/);
   });
+
+  // Found live: asked about "1010 EPHESIANS HUMAN RESOURCES INC", the model returned
+  // "EPHESIANS HUMAN RESOURCES INC" — it read the leading digits as filler. That lost the
+  // exact registry match and degraded a VERIFIED into an ambiguous CAUTION.
+  it("tells the model to copy the agency name verbatim, numbers included", () => {
+    expect(ROUTER_SYSTEM_PROMPT).toMatch(/EXACTLY as the user typed it/);
+    expect(ROUTER_SYSTEM_PROMPT).toMatch(/begin with digits/);
+  });
+});
+
+describe("toSafeRoute — agency names are passed through untouched", () => {
+  // The Surface must never quietly normalise a name either; checkAgency owns normalization.
+  it.each([
+    "1010 EPHESIANS HUMAN RESOURCES INC",
+    "101 MOJO INT`L. CORPORATION",
+    "A & L MANAGEMENT MANPOWER SERVICES",
+    "JAC INT`L MANPOWER SERVICES INC",
+  ])("preserves %j", (name) => {
+    const safe = toSafeRoute(route({ intent: "agency_check", agency_name: name, kb_ids: [] }));
+    expect(safe.agencyName).toBe(name);
+  });
 });
 
 describe("FALLBACK_REPLY", () => {

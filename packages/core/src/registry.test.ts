@@ -176,6 +176,29 @@ describe("checkAgency — fuzzy matching (issue #4, pg_trgm-modeled trigram simi
     }
   });
 
+  // Found on the live site: "Golden Star Manpower Services" (an invented name) cleared the
+  // 0.55 match bar against dozens of real rows purely on the generic tokens "manpower
+  // services", and every one of them was listed — a 28-name wall that reads as
+  // corroboration rather than as a failure to identify the agency.
+  it("R16: caps the strong-match list too, and says how many it withheld", () => {
+    const agencies = [
+      "ABC Manpower Services - Makati Branch",
+      "ABC Manpower Services - Cebu Branch",
+      "ABC Manpower Services - Davao Branch",
+      "ABC Manpower Services - Iloilo Branch",
+      "ABC Manpower Services - Baguio Branch",
+    ].map((name) => baseAgencyRow({ name }));
+
+    const result = checkAgency("ABC Manpower Services", { agencies, syncedAt: SYNCED_AT, jobOrders: [] }, NOW);
+
+    expect(result).toMatchObject({ kind: "ambiguous", verdict: "CAUTION" });
+    if (result.kind === "ambiguous") {
+      expect(result.candidates.length).toBeLessThanOrEqual(3);
+      // Never a silent truncation — the user is told the list was cut.
+      expect(result.reasons[0]).toMatch(/showing the 3 closest of 5/);
+    }
+  });
+
   it("caps the did-you-mean list at the top 3 candidates by similarity", () => {
     // All five score in [0.4, 0.55) against "Star Manpower" — none reach the 0.55 auto-match
     // bar, so this exercises the did-you-mean cap rather than the R16 ambiguous-strong-matches path.
