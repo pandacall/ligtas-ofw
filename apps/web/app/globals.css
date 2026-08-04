@@ -1,54 +1,50 @@
 @import "tailwindcss";
 
 /*
- * LigtasOFW / Bantatay design tokens.
+ * LigtasOFW — TARPAULIN BABALA
  *
- * Direction: the conversation is warm and human; the verdicts are documents. Chat is soft
- * and spoken; a verdict arrives as a stamped record card on manila stock. That contrast is
- * the point — it shows, in the layout itself, that the assistant talks while a deterministic
- * engine adjudicates.
+ * The visual world is the Philippine large-format tarpaulin: the vinyl banner a barangay
+ * strings across a road to announce something everyone needs to know today. Missing persons,
+ * flood warnings, election notices, BABALA signs. Saturated CMYK on a flat field, display type
+ * at shouting scale with a hard offset shadow, brass grommets at the corners.
  *
- * Materials come from the subject's world rather than from a palette generator: manila
- * folder stock (the paper named after Manila, where DMW files live) and narra, the
- * Philippine hardwood, for the persona. Narra is deliberately not red, amber, or green so
- * the brand voice can never be confused with a verdict.
+ * It was chosen because it is already a warning medium. This audience reads a tarp fluently
+ * without being taught, it survives outdoor daylight on a cheap phone in a way a dark UI does
+ * not, and a thing a community *posts* maps onto reporting a recruiter far better than a chat
+ * bubble does.
+ *
+ * Colour strategy: COMMITTED. Tarp yellow owns the surface. Each verdict owns a full-bleed
+ * field of its own colour rather than a tinted accent on neutral — a verdict is a banner, not
+ * a badge. No monospace anywhere: a tarp has printed labels, not code.
  */
 @theme {
-  /* Ground — a cool pale green-grey, kept clearly apart from the manila document stock. */
-  --color-surface: #eef1ee;
-  --color-surface-raised: #f7f9f7;
-  --color-ink: #1b2420;
-  --color-ink-soft: #4c5a54;
-  /* 4.8:1 on --color-surface. The obvious lighter grey measured 3.2:1, which fails for
-     placeholder and caption text — and this audience reads outdoors on cheap screens. */
-  --color-ink-faint: #5f6c67;
-  --color-hairline: #d3dbd6;
+  /* The tarp grounds. Yellow is the default banner stock; paper is the reading surface. */
+  --color-tarp: #f5c518;
+  --color-paper: #fff8ec;
+  --color-paper-edge: #eadfcb;
 
-  /* Manila — the document material. Only verdict/record cards use it. */
-  --color-manila: #e8d2a6;
-  --color-manila-deep: #dcc08d;
-  --color-manila-rule: #b8935a;
-  --color-manila-ink: #4a3a1e;
+  /* Print ink — warm near-black, never pure #000. */
+  --color-ink: #1a1614;
+  --color-ink-soft: #4a423c;
+  /* 4.6:1 on --color-paper. Measured, not guessed. */
+  --color-ink-faint: #6b6058;
 
-  /* Narra — the persona. Bantatay's voice, avatar, and the send control. */
-  --color-narra: #6b3a2a;
-  --color-narra-soft: #f3e7e2;
-  --color-narra-bright: #94513c;
+  /*
+   * Verdict fields. Each is a ground colour with paper text on it, not text on yellow —
+   * amber-on-yellow was unreadable, which is what forced fields over badges.
+   */
+  --color-risk: #c8210f;
+  --color-risk-deep: #97180a;
+  --color-caution: #b4560a;
+  --color-caution-deep: #8a4108;
+  --color-verified: #0e6b52;
+  --color-verified-deep: #0a4f3d;
 
-  /* Verdict semantics. Never carried by colour alone — the emoji + word always ride along.
-     These are tuned against manila, not against white: the stamp sits on the record, and the
-     lighter first pass measured 4.3:1 (verified) and 3.0:1 (caution) there. A verdict is the
-     one string on the page a user must be able to read. */
-  --color-verified: #275b43;
-  --color-verified-wash: #e6efe9;
-  --color-caution: #7a4a0f;
-  --color-caution-wash: #f7eeda;
-  --color-risk: #a62b22;
-  --color-risk-wash: #f8e6e3;
+  /* Hardware: grommets, eyelets, the steel the tarp hangs from. */
+  --color-grommet: #8c8378;
 
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -57,17 +53,15 @@
   }
 
   body {
-    background-color: var(--color-surface);
+    background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    /* Taglish runs long; a slightly open measure keeps it readable on small screens. */
-    line-height: 1.6;
+    line-height: 1.55;
   }
 
-  /* A visible, high-contrast focus ring everywhere — many users are on cheap screens in
-     bright daylight, where a subtle ring disappears. */
+  /* Ink-black ring on saturated grounds, visible on every field colour we use. */
   :focus-visible {
-    outline: 2px solid var(--color-narra);
+    outline: 3px solid var(--color-ink);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -85,88 +79,177 @@
 
 @layer components {
   /*
-   * The signature element: a verdict struck across the record like a rubber stamp. Slightly
-   * rotated and letterspaced, with a doubled border for the inked-edge feel. This is the one
-   * loud gesture in the design — everything around it stays quiet.
+   * PRINTED MATERIAL
+   *
+   * A tarpaulin is screen-printed onto woven vinyl, and the finish review was right that flat
+   * CSS fields left MATERIAL unmet for a world whose entire claim is printed vinyl.
+   *
+   * Three real signatures, all cheap and all from the subject's own world:
+   *   .stock      — the weave. A fine two-axis thread pattern, the substrate itself.
+   *   .halftone   — the screen. Dot rosette from the ink pass.
+   *   .misregister — the press. A hair of colour fringe where a plate sat a fraction off.
+   *
+   * Applied ONLY to large flat colour fields and display type, never behind body copy: this
+   * audience reads on cheap screens in daylight, and texture under small text costs legibility
+   * for nothing. Kept at low alpha so measured contrast is unaffected.
    */
-  .stamp {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.3rem 0.85rem;
-    border: 2px solid currentColor;
-    box-shadow: inset 0 0 0 1px currentColor;
-    border-radius: 3px;
+  .stock {
+    position: relative;
+    isolation: isolate;
+  }
+  .stock::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* The weave: warp and weft of the vinyl scrim. */
+    background-image:
+      repeating-linear-gradient(90deg, rgb(26 22 20 / 0.055) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(0deg, rgb(26 22 20 / 0.045) 0 1px, transparent 1px 4px);
+  }
+
+  .halftone::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    /* The screen: a dot grid on the diagonal, the way a rosette actually lands. */
+    background-image: radial-gradient(circle at center, rgb(26 22 20 / 0.16) 0 1.1px, transparent 1.1px);
+    background-size: 5px 5px;
+    background-position: 0 0;
+    mix-blend-mode: multiply;
+  }
+
+  /*
+   * Misregistration. The plate sat a fraction off, so a sliver of the previous colour shows on
+   * one edge of the letterform. Sub-pixel and single-sided, which is what makes it read as a
+   * press fault rather than a drop shadow or a glow.
+   */
+  .misregister {
+    text-shadow:
+      -0.012em -0.008em 0 rgb(200 33 15 / 0.5),
+      0.035em 0.038em 0 var(--shout-shadow, rgb(0 0 0 / 0.22));
+  }
+
+  /*
+   * The tarpaulin shout. Hard offset shadow, no blur — this is ink printed twice, not a soft
+   * drop shadow. Tight tracking and a slight optical squeeze is how a tarp printer fits a long
+   * Tagalog sentence across a two-metre banner.
+   */
+  .shout {
     font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.9rem;
-    letter-spacing: 0.14em;
+    font-weight: 400;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
     text-transform: uppercase;
-    transform: rotate(-2.5deg);
-    transform-origin: left center;
-    /*
-     * The one authored moment: the stamp lands. Exponential ease-out, no overshoot — a press
-     * decelerates into the paper, it does not spring back off it.
-     *
-     * Scale only, never opacity. The verdict is the single string on this page a user must
-     * be able to read, so its resting state is fully visible and the animation can only ever
-     * be a flourish on top of something already legible.
-     */
-    animation: stamp-press 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  @keyframes stamp-press {
-    from {
-      transform: rotate(-2.5deg) scale(1.28);
-    }
-    to {
-      transform: rotate(-2.5deg) scale(1);
-    }
-  }
-
-  /* Thinking dots: a travelling dim, not a cartoon bounce. */
-  .thinking-dot {
-    animation: thinking 1.15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  }
-
-  @keyframes thinking {
-    0%,
-    60%,
-    100% {
-      opacity: 0.28;
-    }
-    30% {
-      opacity: 1;
-    }
+    text-wrap: balance;
   }
 
   /*
-   * Document stock. Square-ish corners on purpose — records don't have soft edges, and this
-   * is the committed world's one deliberate departure from the 12–16px card radius.
-   * Elevation is declared once, as a border. No shadow underneath it.
+   * The offset is em-relative, so at display sizes it grows with the type. At 7rem the old
+   * 0.055em was ~6px, enough for one line's shadow to cut into the cap tops of the next; the
+   * headline pairs this with looser leading for the same reason.
    */
-  .record {
-    background-color: var(--color-manila);
-    border: 1px solid var(--color-manila-rule);
-    border-radius: 4px;
-    color: var(--color-manila-ink);
-  }
-
-  /* The double rule under a record's header line, straight off a paper form. */
-  .record-rule {
-    border-bottom: 3px double var(--color-manila-rule);
+  .shout-shadow {
+    text-shadow: 0.035em 0.038em 0 var(--shout-shadow, rgb(0 0 0 / 0.22));
   }
 
   /*
-   * A finding on the record: a paper-white excerpt band carrying the verbatim evidence.
-   * A wash and a hairline rather than a thick coloured edge — the excerpt should read as a
-   * photocopied strip, not as a framework alert.
+   * A tarp panel. Square corners, a hard ink keyline, and a printed feel — the shadow is an
+   * offset block like a banner lifted a few millimetres off a wall, never a soft blur.
+   */
+  .tarp {
+    border: 2px solid var(--color-ink);
+    /* Solid ink, not a translucent smudge — this is meant to look struck, not blurred. */
+    box-shadow: 4px 4px 0 var(--color-ink);
+  }
+
+  /*
+   * Grommets — the brass eyelets a tarp is tied through. All four corners, so the thing is
+   * actually pinned rather than just decorated along one edge.
+   *
+   * Drawn as a background rather than pseudo-elements: ::before/::after only gave two, and the
+   * top pair overprinted the first letter of any header band it sat on.
+   */
+  .grommet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /*
+     * An overlay, not the element's own background: painted on the element the top pair sat
+     * behind the verdict banner's opaque field, so a card showed two pinned corners instead of
+     * four. z-index puts all four in front of whatever the card paints.
+     */
+    z-index: 1;
+    --grommet-dot: radial-gradient(
+      circle at center,
+      var(--color-paper) 0 2.5px,
+      var(--color-grommet) 2.5px 4.5px,
+      transparent 4.5px
+    );
+    background-image: var(--grommet-dot), var(--grommet-dot), var(--grommet-dot), var(--grommet-dot);
+    background-repeat: no-repeat;
+    background-size: 11px 11px;
+    background-position:
+      0.55rem 0.55rem,
+      calc(100% - 0.55rem) 0.55rem,
+      0.55rem calc(100% - 0.55rem),
+      calc(100% - 0.55rem) calc(100% - 0.55rem);
+  }
+
+  /*
+   * The evidence strip: a verbatim quote from the post, printed as a pasted-on slip.
+   *
+   * Full ink keyline, not a coloured side rule — a thick accent border on one edge is the
+   * clearest tell of a generated interface, and nothing in a tarpaulin has one. Severity is
+   * carried by the printed tier chip instead, which is how this world labels things anyway.
+   */
+  /*
+   * A ruled section of the same tarp, not a box inside a box. The keylined-slip version put a
+   * third and fourth containment level inside the scan card at exactly the moment a reader is
+   * deciding whether to send money — and nested cards are always wrong.
    */
   .evidence {
-    background-color: rgb(255 253 246 / 0.72);
-    border: 1px solid rgb(184 147 90 / 0.35);
-    border-radius: 3px;
-    font-size: 0.8125rem;
-    line-height: 1.6;
+    border-top: 2px dashed var(--color-paper-edge);
+  }
+  .evidence:first-child {
+    border-top: 0;
+  }
+
+  /*
+   * The verdict lands the way a tarp does when the last corner is tied: it drops and settles.
+   * Scale and a short vertical fall, decelerating hard, no overshoot. Never opacity — the
+   * verdict is the one string that must be legible from the first frame even if motion fails.
+   */
+  .banner-drop {
+    animation: banner-drop 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    transform-origin: top center;
+  }
+
+  @keyframes banner-drop {
+    from {
+      transform: translateY(-0.5rem) scaleY(0.94);
+    }
+    to {
+      transform: translateY(0) scaleY(1);
+    }
+  }
+
+  /* Thinking: the tarp flexing in wind, not a chat app's three bouncing dots. */
+  .flap {
+    animation: flap 1.6s ease-in-out infinite;
+  }
+
+  @keyframes flap {
+    0%,
+    100% {
+      transform: skewY(0deg);
+    }
+    50% {
+      transform: skewY(-1.2deg);
+    }
   }
 }

@@ -8,7 +8,12 @@
  */
 type IconProps = { size?: number; className?: string };
 
-function Svg({ size = 20, className = "", children }: IconProps & { children: React.ReactNode }) {
+function Svg({
+  size = 20,
+  className = "",
+  strokeWidth = 1.75,
+  children,
+}: IconProps & { strokeWidth?: number; children: React.ReactNode }) {
   return (
     <svg
       width={size}
@@ -16,7 +21,7 @@ function Svg({ size = 20, className = "", children }: IconProps & { children: Re
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.75"
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -71,6 +76,52 @@ export function CloseIcon(props: IconProps) {
     <Svg {...props}>
       <path d="M6.5 6.5 17.5 17.5" />
       <path d="M17.5 6.5 6.5 17.5" />
+    </Svg>
+  );
+}
+
+export function PhoneIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7.5 3.5h-2A2 2 0 0 0 3.5 5.7C4.2 12.6 11.4 19.8 18.3 20.5a2 2 0 0 0 2.2-2v-2a1.6 1.6 0 0 0-1.3-1.6l-2.7-.5a1.6 1.6 0 0 0-1.6.7l-.7 1a13.6 13.6 0 0 1-5.8-5.8l1-.7a1.6 1.6 0 0 0 .7-1.6l-.5-2.7A1.6 1.6 0 0 0 7.5 3.5Z" />
+    </Svg>
+  );
+}
+
+/*
+ * Verdict marks, drawn in the same family as every other icon.
+ *
+ * These replace ✅ ⚠️ 🚨, which rendered as vendor colour emoji: rounded, gradient-shaded,
+ * specular-highlighted 3D pictograms welded to the one component of a world that declares no
+ * rounded corners and no soft blur. Meaning still never rides on the mark alone — the word and
+ * the colour field ride with it.
+ */
+export function VerifiedMark(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={2.4}>
+      <path d="M4 12.5 9.5 18 20 6.5" />
+    </Svg>
+  );
+}
+
+export function CautionMark(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={2.2}>
+      <path d="M12 3.5 22 20.5H2Z" />
+      <path d="M12 10v4.2" />
+      <path d="M12 17.6v.1" />
+    </Svg>
+  );
+}
+
+export function RiskMark(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={2.2}>
+      <path d="M5 19.5v-7a7 7 0 0 1 14 0v7Z" />
+      <path d="M2.5 19.5h19" />
+      <path d="M12 2.5v2" />
+      <path d="M4 6 2.6 4.6" />
+      <path d="M20 6l1.4-1.4" />
     </Svg>
   );
 }

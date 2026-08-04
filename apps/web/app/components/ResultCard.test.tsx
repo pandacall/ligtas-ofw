@@ -230,7 +230,7 @@ describe("ResultCard — Job Orders (issue #5)", () => {
       agency: baseAgency(),
     };
     const html = renderToStaticMarkup(<ResultCard result={result} />);
-    expect(html).toContain("No approved Job Orders on file");
+    expect(html).toContain("Walang aprubadong Job Order sa listahan");
   });
 
   it("R12-style claim match: renders the confirming reason and marks the matched row", () => {
@@ -250,7 +250,7 @@ describe("ResultCard — Job Orders (issue #5)", () => {
     const html = renderToStaticMarkup(<ResultCard result={result} />);
     expect(html).toContain("VERIFIED");
     expect(html).toContain("approved job order on file: Welder in Japan");
-    expect(html).toContain("matches your claim");
+    expect(html).toContain("tugma sa sinabi mo");
   });
 
   it("R13-style claim miss: rows exist but none match => CAUTION copy naming the destination", () => {
@@ -270,7 +270,7 @@ describe("ResultCard — Job Orders (issue #5)", () => {
     const html = renderToStaticMarkup(<ResultCard result={result} />);
     expect(html).toContain("CAUTION");
     expect(html).toContain("no approved job order for Japan on file");
-    expect(html).not.toContain("matches your claim");
+    expect(html).not.toContain("tugma sa sinabi mo");
   });
 
   it("R14-style empty registry + claim: renders the 'data may lag' CAUTION copy", () => {
@@ -289,7 +289,7 @@ describe("ResultCard — Job Orders (issue #5)", () => {
     const html = renderToStaticMarkup(<ResultCard result={result} />);
     expect(html).toContain("CAUTION");
     expect(html).toContain("data may lag");
-    expect(html).toContain("No approved Job Orders on file");
+    expect(html).toContain("Walang aprubadong Job Order sa listahan");
     // Never HIGH_RISK for a missing Job Order match.
     expect(html).not.toContain("HIGH_RISK");
   });

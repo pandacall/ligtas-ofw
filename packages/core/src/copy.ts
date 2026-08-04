@@ -107,7 +107,21 @@ export const VERDICT_BANNER: Record<Verdict, string> = {
 };
 
 export const NOT_A_JOB_POST_COPY =
-  "Ang na-paste mong text ay hindi mukhang job post. Walang verdict na ipinapakita dahil walang trabahong ma-anaylize dito.";
+  "Ang na-paste mong text ay hindi mukhang job post. Walang verdict na ipinapakita dahil walang trabahong ma-analyze dito.";
+
+/**
+ * Shown when a scan's registry lookup is *less* severe than the post's own verdict — the
+ * impersonation shape (verdict-cases.md P3 / `scam-15`): a real, licensed agency whose name is
+ * being borrowed by a fraudulent post.
+ *
+ * This is the sentence the card previously never said. Without it a user reads "Valid License"
+ * next to a HIGH_RISK stamp and resolves the contradiction in the reassuring direction, which
+ * is precisely the mistake the scammer is engineering.
+ */
+export const REGISTRY_CONTRADICTS_POST_COPY =
+  "Totoo at lisensyado ang ahensyang ito sa listahan ng DMW — pero delikado pa rin ang post na ito. " +
+  "Karaniwang panloloko ito: ginagamit lang ng scammer ang pangalan ng isang tunay na ahensya. " +
+  "Kontakin ang ahensya sa opisyal nilang numero sa DMW website, hindi sa numerong nasa post.";
 
 export const UNANALYZABLE_COPY =
   "Hindi namin na-analyze ang post na ito. Huwag ipagpalagay na ligtas o peke ito — mangyaring i-check nang mano-mano sa opisyal na DMW website o tumawag sa DMW Hotline 1348.";

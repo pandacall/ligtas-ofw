@@ -2,22 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { ChatTurnResult, QuickAction } from "@ligtas-ofw/core";
-// Imported from the leaf module, not the package index: this is a client component, so a
-// value import from the index would bundle createDbClient — and therefore pg — into the
-// browser build. See packages/core/src/chat-history.ts.
-import {
-  HISTORY_LIMIT,
-  summarizeTurnResult,
-  type ChatHistoryEntry,
-} from "@ligtas-ofw/core/chat-history";
-import { BANTATAY_GREETING } from "@ligtas-ofw/core/copy";
+import { HISTORY_LIMIT, summarizeTurnResult, type ChatHistoryEntry } from "@ligtas-ofw/core/chat-history";
+import { formatDate } from "@ligtas-ofw/core/format";
 import { chatTurnAction, type ChatActionState } from "../../actions/chat";
 import { MAX_IMAGE_BYTES, type ImageValidationError } from "../../../lib/image-upload";
-import { BantatayAvatar } from "../BantatayAvatar";
 import { ResultCard } from "../ResultCard";
 import { ScanResultCard } from "../ScanResultCard";
+import { BantatayAvatar } from "../BantatayAvatar";
 import { BantatayMessage, TypingIndicator, UserMessage } from "./ChatMessage";
-import { Composer } from "./Composer";
+import { Composer, type ComposerHandle } from "./Composer";
 import { DEFAULT_CHIPS, QuickActionChips, type ChipSpec } from "./QuickActionChips";
 import { KbAnswerCard } from "./KbAnswerCard";
 
@@ -28,25 +21,19 @@ const FILE_ERROR_COPY: Record<ImageValidationError, string> = {
   too_large: `Masyadong malaki ang file (max ${MAX_IMAGE_MB}MB).`,
 };
 
-/**
- * Messages live in React state only and are never persisted server-side — people paste
- * contracts, salaries, and recruiter phone numbers in here, and none of that needs to
- * outlive the tab (ADR-0005).
- */
 type NewMessage =
   | { role: "user"; text?: string; imageName?: string }
   | { role: "bantatay"; text?: string; turn?: ChatTurnResult; syncedAt?: Date; isError?: boolean };
 
-// Intersection rather than repeating `id` per variant — Omit over a bare union would collapse
-// to the keys they share.
 type Message = NewMessage & { id: number };
 
-export function Chat() {
+export function Chat({ syncedAt }: { syncedAt?: Date }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [pendingChip, setPendingChip] = useState<ChipSpec | null>(null);
   const [isPending, startTransition] = useTransition();
   const nextId = useRef(0);
   const streamEnd = useRef<HTMLDivElement>(null);
+  const composer = useRef<ComposerHandle>(null);
 
   useEffect(() => {
     streamEnd.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -58,10 +45,13 @@ export function Chat() {
 
   const send = useCallback(
     (input: { text: string; image: File | null; action?: QuickAction }) => {
-      // Built from what is already on screen, before this turn's own message is appended.
       const history = toHistory(messages);
 
-      append({ role: "user", text: input.text || undefined, imageName: input.image?.name });
+      // Only render a user bubble when the user actually said something. A chip with no text
+      // used to emit an empty 28x20 block with no content and no accessible name.
+      if (input.text || input.image) {
+        append({ role: "user", text: input.text || undefined, imageName: input.image?.name });
+      }
       setPendingChip(null);
 
       const formData = new FormData();
@@ -75,7 +65,6 @@ export function Chat() {
         try {
           state = await chatTurnAction(null, formData);
         } catch {
-          // Never guess an outcome on a transport failure — say so plainly.
           append({
             role: "bantatay",
             text: "May problema sa koneksyon. Pakisubukan ulit sa ilang sandali.",
@@ -98,9 +87,11 @@ export function Chat() {
   );
 
   function selectChip(chip: ChipSpec) {
-    // Chips that need the user's text arm the composer; the rest fire immediately.
     if (chip.prompt) {
       setPendingChip(chip);
+      // Focusing the input is the feedback: it opens the keyboard on mobile and scrolls the
+      // composer into view, so arming a chip visibly does something.
+      requestAnimationFrame(() => composer.current?.focus());
       return;
     }
     send({ text: "", image: null, action: chip.action });
@@ -108,15 +99,33 @@ export function Chat() {
 
   const isFirstTurn = messages.length === 0;
 
-  return (
-    <div className="flex min-h-dvh flex-col">
-      <Header />
+  const composerEl = (
+    <Composer
+      ref={composer}
+      onSubmit={({ text, image }) => send({ text, image, action: pendingChip?.action })}
+      disabled={isPending}
+      placeholder={pendingChip?.prompt ?? "Pangalan ng ahensya, o i-paste ang job post…"}
+      pendingAction={pendingChip?.label}
+      onClearAction={() => setPendingChip(null)}
+      onTarp={isFirstTurn}
+    />
+  );
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 sm:px-4">
+  return (
+    <div className="flex min-h-dvh flex-col bg-paper">
+      <Header compact={!isFirstTurn} />
+
+      <main className="flex flex-1 flex-col overflow-y-auto">
         {isFirstTurn ? (
-          <Arrival onSelect={selectChip} />
+          <Arrival onSelect={selectChip} armed={pendingChip?.action} composer={composerEl} syncedAt={syncedAt} />
         ) : (
-          <div className="mx-auto w-full max-w-2xl space-y-5">
+          <div
+            className="mx-auto w-full max-w-2xl space-y-6 px-3 py-5 sm:px-4 lg:max-w-4xl lg:px-0 lg:py-8"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+            aria-label="Usapan kay Bantatay"
+          >
             {messages.map((message) =>
               message.role === "user" ? (
                 <UserMessage key={message.id} text={message.text} imageName={message.imageName} />
@@ -129,39 +138,36 @@ export function Chat() {
 
             {!isPending && (
               <div className="pt-1">
-                <QuickActionChips chips={DEFAULT_CHIPS} onSelect={selectChip} disabled={isPending} />
+                <QuickActionChips
+                  chips={DEFAULT_CHIPS}
+                  onSelect={selectChip}
+                  disabled={isPending}
+                  armed={pendingChip?.action}
+                />
               </div>
             )}
 
             <div ref={streamEnd} />
           </div>
         )}
-      </div>
+      </main>
 
-      <Composer
-        onSubmit={({ text, image }) => send({ text, image, action: pendingChip?.action })}
-        disabled={isPending}
-        placeholder={pendingChip?.prompt ?? "Magtanong, o i-paste ang job post…"}
-        pendingAction={pendingChip?.label}
-        onClearAction={() => setPendingChip(null)}
-      />
+      {/* Once the conversation starts the composer pins to the bottom, in the thumb zone. On
+          arrival it lives inside the tarp instead — see Arrival. */}
+      {!isFirstTurn && composerEl}
     </div>
   );
 }
 
 /**
- * Turns the on-screen conversation into the digest sent with the next request, so a follow-up
- * like "oo" or "paano yung fee nila?" has a referent (ADR-0005).
- *
- * Derived from `messages` rather than kept as separate state — one source of truth, and what
- * the Router sees can never drift from what the user is looking at. Only the tail is sent;
- * core clamps and truncates again server-side, since this input is client-supplied.
+ * Builds the digest sent with the next request so a follow-up like "oo" has a referent
+ * (ADR-0005). Derived from `messages` rather than kept as separate state, so what the Router
+ * sees can never drift from what the user is looking at.
  */
 function toHistory(messages: Message[]): ChatHistoryEntry[] {
   const entries: ChatHistoryEntry[] = [];
   for (const message of messages) {
     if (message.role === "user") {
-      // An image-only turn has no text worth digesting; name the act instead.
       const content = message.text ?? (message.imageName ? "sent a screenshot of a job post" : "");
       if (content) entries.push({ role: "user", content });
       continue;
@@ -173,42 +179,114 @@ function toHistory(messages: Message[]): ChatHistoryEntry[] {
   return entries.slice(-HISTORY_LIMIT);
 }
 
-/**
- * The arrival state. Centred rather than top-anchored, because on a phone the alternative is
- * a greeting stranded above two-thirds of empty screen.
- *
- * It also has to do real work: someone lands here already frightened, so the two things
- * worth saying immediately are what Bantatay can actually check and — because this tool is
- * not the DMW and must never be mistaken for it — where the official answer lives.
- */
-function Arrival({ onSelect }: { onSelect: (chip: ChipSpec) => void }) {
+/** A stamped fact on the tarp's lower matter: tracked label above its value. */
+function TarpFact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center py-6">
-      <BantatayAvatar size={60} />
-      <h1 className="mt-4 font-display text-[1.6rem] leading-tight font-bold tracking-[-0.02em] text-ink sm:text-3xl">
-        Bago ka magbayad, itanong mo muna.
-      </h1>
-      <p className="mt-3 max-w-prose whitespace-pre-line text-[0.95rem] leading-relaxed text-ink-soft">
-        {BANTATAY_GREETING}
-      </p>
+    <div>
+      {/*
+        ink/80 at 0.68rem measures 6.9:1 on tarp yellow. The first pass used ink/60 at 0.6rem,
+        which is 3.96:1 — under AA, at 9.6px, on the brightest field in the product, for people
+        reading in daylight. The ink-faint token is measured against paper, not against yellow,
+        so it cannot be reused here.
+      */}
+      <dt className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-ink/80">{label}</dt>
+      <dd className="mt-0.5 text-[0.88rem] font-bold text-ink">{children}</dd>
+    </div>
+  );
+}
 
-      <div className="mt-6">
-        <QuickActionChips chips={DEFAULT_CHIPS} onSelect={onSelect} />
+function Arrival({
+  onSelect,
+  armed,
+  composer,
+  syncedAt,
+}: {
+  onSelect: (chip: ChipSpec) => void;
+  armed?: QuickAction;
+  composer: React.ReactNode;
+  syncedAt?: Date;
+}) {
+  return (
+    <div className="flex flex-1 flex-col">
+      {/*
+        The whole first viewport is one tarp: the shout owns the upper field, the input sits
+        against the bottom edge, and everything else falls below the fold by construction rather
+        than by luck. The composer lives HERE on arrival rather than pinned to the window bottom —
+        an earlier version put the avatar, greeting and chip row above the fold with a
+        bottom-pinned input, which is the AI-chat empty state this direction exists to refuse.
+
+        `justify-between` closes the dead lower half that a top-anchored full-height section left
+        behind, and puts the one control in the thumb zone. `dvh` so an open mobile keyboard
+        shrinks it correctly.
+
+        The headline is set to fill the field, not to fit a line — a tarpaulin is mostly type, and
+        a polite headline in a full-viewport yellow section reads as an empty rectangle with a
+        sentence in it. It wraps naturally, so one clamp covers 320 through 1440.
+      */}
+      <section className="stock halftone grommet relative flex min-h-[calc(100dvh-3.25rem)] flex-col justify-between border-b-2 border-ink bg-tarp px-4 pb-9 pt-[7vh] sm:px-8">
+        <div className="relative z-1 mx-auto w-full max-w-2xl lg:max-w-5xl">
+          <h1 className="shout misregister max-w-[16ch] text-[clamp(3.1rem,15vw,7rem)] leading-[0.96] text-ink lg:text-[clamp(7rem,9.5vw,9.5rem)]">
+            Bago ka magbayad, itanong mo muna.
+          </h1>
+          <p className="mt-5 max-w-xl text-[0.95rem] font-medium leading-relaxed text-ink sm:text-[1.05rem] lg:text-[1.2rem]">
+            Ilagay ang pangalan ng recruitment agency, o i-paste ang job post.
+          </p>
+        </div>
+
+        <div className="relative z-1 mx-auto mt-8 w-full max-w-2xl lg:max-w-5xl">
+          {composer}
+          {/*
+            The field's lower matter, and the reason it is no longer empty. A barangay notice
+            always carries what it is and who to call; here that doubles as this product's core
+            trust claim — the registry is a dated local copy, and the freshness stamp is the
+            product ("cache is the product"). Rendered without the stamp when the registry can't
+            be reached, so the homepage never fails on a database round-trip.
+          */}
+          <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 border-t-2 border-ink/25 pt-4 sm:grid-cols-4">
+            <TarpFact label="Bayad">Libre, walang account</TarpFact>
+            <TarpFact label="Usapan">Hindi nase-save</TarpFact>
+            <TarpFact label="Listahan ng DMW">
+              {syncedAt ? `As of ${formatDate(syncedAt)}` : "Sinusuri kada gabi"}
+            </TarpFact>
+            <TarpFact label="DMW Hotline">
+              <a href="tel:1348" className="underline decoration-2 underline-offset-2">
+                1348
+              </a>
+            </TarpFact>
+          </dl>
+        </div>
+      </section>
+
+      {/* Everything below the fold, for the smaller number of people who came to understand
+          rather than to check. */}
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6 sm:px-5 lg:max-w-5xl">
+        <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-ink-faint">O pumili dito</p>
+        <div className="mt-3">
+          <QuickActionChips chips={DEFAULT_CHIPS} onSelect={onSelect} armed={armed} />
+        </div>
+
+        <div className="mt-8 flex items-start gap-3 border-t-2 border-dashed border-paper-edge pt-5">
+          <BantatayAvatar size={44} className="shrink-0" />
+          <p className="max-w-prose text-[0.8rem] leading-relaxed text-ink-soft">
+            Ako si <strong className="font-bold text-ink">Bantatay</strong>. Libre ito, walang account, at hindi
+            nase-save ang usapan natin. Hindi ito opisyal na tool ng DMW — panimulang pagsusuri lang, kaya laging
+            i-verify sa{" "}
+            <a
+              href="https://dmw.gov.ph"
+              target="_blank"
+              rel="noreferrer"
+              className="font-bold text-ink underline decoration-2 underline-offset-2"
+            >
+              dmw.gov.ph
+            </a>{" "}
+            o sa DMW Hotline{" "}
+            <a href="tel:1348" className="font-bold text-ink underline decoration-2 underline-offset-2">
+              1348
+            </a>{" "}
+            bago ka magdesisyon.
+          </p>
+        </div>
       </div>
-
-      <p className="mt-8 max-w-prose border-t border-hairline pt-4 text-[0.75rem] leading-relaxed text-ink-faint">
-        Libre, walang account, at hindi nase-save ang usapan natin. Hindi ito opisyal na tool ng DMW —
-        panimulang pagsusuri lang ito, kaya laging i-verify sa{" "}
-        <a
-          href="https://dmw.gov.ph"
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-narra underline decoration-narra/35 underline-offset-2 hover:decoration-narra"
-        >
-          dmw.gov.ph
-        </a>{" "}
-        o sa DMW Hotline 1348 bago ka magdesisyon.
-      </p>
     </div>
   );
 }
@@ -216,11 +294,9 @@ function Arrival({ onSelect }: { onSelect: (chip: ChipSpec) => void }) {
 function BantatayTurn({ message }: { message: Extract<Message, { role: "bantatay" }> }) {
   if (message.isError) {
     return (
-      <BantatayMessage>
-        <p className="rounded-2xl rounded-tl-sm bg-risk-wash px-3.5 py-2.5 text-[0.925rem] text-risk" role="alert">
-          {message.text}
-        </p>
-      </BantatayMessage>
+      <div className="border-2 border-risk bg-risk/10 p-3" role="alert">
+        <p className="text-[0.92rem] font-medium text-ink">{message.text}</p>
+      </div>
     );
   }
 
@@ -260,23 +336,31 @@ function BantatayTurn({ message }: { message: Extract<Message, { role: "bantatay
   }
 }
 
-function Header() {
+/**
+ * The header carries the standing "not the DMW" disclaimer, which is a legal requirement rather
+ * than a footnote. On arrival it stays out of the way of the shout; once the conversation
+ * starts it holds the only persistent h1 the page has.
+ */
+function Header({ compact }: { compact: boolean }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-hairline bg-surface/90 px-3 py-2.5 backdrop-blur sm:px-4">
+    <header className="sticky top-0 z-10 border-b-2 border-ink bg-ink px-3 py-2 sm:px-4">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <BantatayAvatar size={32} className="shrink-0" />
-          <div className="min-w-0">
-            <p className="font-display text-[1.05rem] font-bold leading-tight tracking-[-0.01em] text-ink">
+        {compact ? (
+          <h1 className="shout text-[1.05rem] leading-none text-tarp">
+            LigtasOFW
+            <span className="ml-2 font-sans text-[0.62rem] font-bold uppercase tracking-[0.14em] text-paper/70">
               Bantatay
-            </p>
-            <p className="truncate text-[0.75rem] leading-tight text-ink-faint">
-              Bantay mo sa recruitment, tulad ng tatay.
-            </p>
-          </div>
-        </div>
-        {/* The disclaimer is a standing legal requirement, not a footnote — it stays on screen. */}
-        <p className="shrink-0 text-right text-[0.65rem] font-medium leading-tight text-ink-faint">
+            </span>
+          </h1>
+        ) : (
+          <p className="shout text-[1.05rem] leading-none text-tarp">
+            LigtasOFW
+            <span className="ml-2 font-sans text-[0.62rem] font-bold uppercase tracking-[0.14em] text-paper/70">
+              Bantatay
+            </span>
+          </p>
+        )}
+        <p className="shrink-0 text-right text-[0.62rem] font-bold uppercase leading-tight tracking-[0.06em] text-paper/80">
           Hindi opisyal
           <br />
           na DMW tool

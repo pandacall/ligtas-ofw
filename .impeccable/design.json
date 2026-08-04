@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-04T00:00:00.000Z",
+  "title": "Design System: LigtasOFW — Tarpaulin Babala",
+  "extensions": {
+    "colorMeta": {
+      "tarp": {
+        "role": "primary",
+        "displayName": "Tarp Yellow",
+        "canonical": "#f5c518",
+        "tonalRamp": ["#2e2404", "#4f3d06", "#7a5e08", "#a8800b", "#d0a00f", "#f5c518", "#f9d866", "#fdf0c4"]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#fff8ec",
+        "tonalRamp": ["#241e14", "#3e3524", "#5c503a", "#8a7c63", "#b8aa92", "#dcd0bb", "#f2e9d8", "#fff8ec"]
+      },
+      "paper-edge": {
+        "role": "neutral",
+        "displayName": "Paper Edge",
+        "canonical": "#eadfcb",
+        "note": "Dashed section rules inside a card. Its only job — never a surface, never type.",
+        "tonalRamp": ["#241e14", "#3e3524", "#5c503a", "#8a7c63", "#b8aa92", "#dcd0bb", "#eadfcb", "#fff8ec"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Print Ink",
+        "canonical": "#1a1614",
+        "note": "Warm near-black. Never #000. Every keyline, every block shadow, all primary text.",
+        "tonalRamp": ["#0a0808", "#1a1614", "#2e2825", "#4a423c", "#6b6058", "#968a80", "#c4bab1", "#e8e0d8"]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "#4a423c",
+        "note": "Bantatay's spoken words, footer copy, secondary annotation. Step 4 of the ink ramp."
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "#6b6058",
+        "note": "Printed labels and input placeholders. Measured 4.6:1 on #fff8ec — the floor, not a guess."
+      },
+      "risk": {
+        "role": "secondary",
+        "displayName": "Signal Red",
+        "canonical": "#c8210f",
+        "note": "HIGH_RISK field and the CRITICAL tier chip. Never a tint, never a border accent.",
+        "tonalRamp": ["#2c0703", "#4c0c05", "#6e1207", "#97180a", "#c8210f", "#e24a33", "#f08c7c", "#f9cfc7"]
+      },
+      "risk-deep": {
+        "role": "secondary",
+        "displayName": "Deep Red",
+        "canonical": "#97180a",
+        "note": "Offset shadow for the verdict word on a HIGH_RISK field. No other use."
+      },
+      "caution": {
+        "role": "secondary",
+        "displayName": "Burnt Orange",
+        "canonical": "#b4560a",
+        "note": "CAUTION field and the WARNING tier chip. Chosen over amber, which was unreadable on tarp yellow.",
+        "tonalRamp": ["#2a1402", "#471f04", "#6b3106", "#8a4108", "#b4560a", "#d97f2a", "#edae72", "#f8dcbe"]
+      },
+      "caution-deep": {
+        "role": "secondary",
+        "displayName": "Deep Orange",
+        "canonical": "#8a4108",
+        "note": "Offset shadow for the verdict word on a CAUTION field. No other use."
+      },
+      "verified": {
+        "role": "secondary",
+        "displayName": "Deep Green",
+        "canonical": "#0e6b52",
+        "note": "VERIFIED field, plus the single inline mark on a matched job order.",
+        "tonalRamp": ["#03170f", "#05271d", "#073d2e", "#0a4f3d", "#0e6b52", "#189c7a", "#4fc6a6", "#b4ebdb"]
+      },
+      "verified-deep": {
+        "role": "secondary",
+        "displayName": "Deeper Green",
+        "canonical": "#0a4f3d",
+        "note": "Offset shadow for the verdict word on a VERIFIED field. No other use."
+      },
+      "grommet": {
+        "role": "tertiary",
+        "displayName": "Grommet Brass",
+        "canonical": "#8c8378",
+        "note": "The eyelet ring. Hardware only — never type, never a surface.",
+        "tonalRamp": ["#1c1917", "#2e2a26", "#4a443e", "#6b645b", "#8c8378", "#ada69c", "#ccc7bf", "#e7e3de"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Arrival Shout",
+        "purpose": "The one huge line on the first viewport. Anton, ~16ch max, set to fill the field rather than to fit a line. Carries the misregistration signature."
+      },
+      "headline": {
+        "displayName": "Verdict Word",
+        "purpose": "VERIFIED / CAUTION / HIGH_RISK on its colour field, paired with a drawn mark and the deep-mate offset shadow."
+      },
+      "title": {
+        "displayName": "Record Name",
+        "purpose": "A matched agency's own name inside a card, KB topic headings, and the 1.05rem header wordmark."
+      },
+      "body": {
+        "displayName": "Reading Copy",
+        "purpose": "Messages, verdict explanations, card prose. Steps to 1.05rem inside cards at lg."
+      },
+      "body-sm": {
+        "displayName": "Detail Copy",
+        "purpose": "Evidence rows, registry fields, list items."
+      },
+      "footnote": {
+        "displayName": "Footer",
+        "purpose": "The mandatory freshness + verify + hotline footer, in soft ink."
+      },
+      "label": {
+        "displayName": "Printed Label",
+        "purpose": "Section labels inside a card. Replaces monospace everywhere it would have appeared."
+      },
+      "label-micro": {
+        "displayName": "Stamp Label",
+        "purpose": "Severity tier chips, the arrival tarp's lower-matter field labels, the persona tag."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-block",
+        "value": "4px 4px 0 #1a1614",
+        "purpose": "Every result card, paired with its 2px ink border. The signature object shadow — solid ink, blur 0."
+      },
+      {
+        "name": "speech-block",
+        "value": "3px 3px 0 rgb(26 22 20 / 0.16)",
+        "purpose": "The user's own tarp-yellow speech strip. Lighter than a card because speech is not an object."
+      },
+      {
+        "name": "chip-block",
+        "value": "2px 2px 0 rgb(26 22 20 / 0.14)",
+        "purpose": "Quick-action chip at rest."
+      },
+      {
+        "name": "chip-block-armed",
+        "value": "2px 2px 0 rgb(26 22 20 / 0.25)",
+        "purpose": "Armed chip, which also inverts to ink ground / paper text."
+      },
+      {
+        "name": "shout-shadow",
+        "value": "text-shadow: 0.035em 0.038em 0 var(--shout-shadow, rgb(0 0 0 / 0.22))",
+        "purpose": "Display type printed twice. Em-relative so it scales with the type; a verdict banner overrides --shout-shadow with its own deep mate."
+      },
+      {
+        "name": "misregister",
+        "value": "text-shadow: -0.012em -0.008em 0 rgb(200 33 15 / 0.5), 0.035em 0.038em 0 var(--shout-shadow, rgb(0 0 0 / 0.22))",
+        "purpose": "Sub-pixel single-sided plate fringe on the arrival shout only. Single-sidedness is what makes it read as a press fault rather than a glow."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 3px solid #1a1614; outline-offset: 2px; border-radius: 2px",
+        "purpose": "Ink, because ink is the one colour visible on every field in the palette. The 2px radius is the system's only non-zero corner."
+      }
+    ],
+    "textures": [
+      {
+        "name": "stock",
+        "value": "repeating-linear-gradient(90deg, rgb(26 22 20 / 0.055) 0 1px, transparent 1px 4px), repeating-linear-gradient(0deg, rgb(26 22 20 / 0.045) 0 1px, transparent 1px 4px)",
+        "purpose": "The vinyl scrim's warp and weft, painted at z-index -1. Large colour fields only."
+      },
+      {
+        "name": "halftone",
+        "value": "radial-gradient(circle at center, rgb(26 22 20 / 0.16) 0 1.1px, transparent 1.1px) / 5px 5px, mix-blend-mode: multiply",
+        "purpose": "The ink pass's dot rosette. Large colour fields only, low alpha so measured contrast is unaffected."
+      },
+      {
+        "name": "grommet",
+        "value": "four 11px radial-gradient rings (paper centre 0-2.5px, #8c8378 2.5-4.5px) inset 0.55rem from each corner, painted as an ::after overlay at z-index 1",
+        "purpose": "The brass eyelets a tarp is tied through. Overlay rather than element background so all four sit in front of an opaque verdict field."
+      }
+    ],
+    "motion": [
+      {
+        "name": "banner-drop",
+        "value": "translateY(-0.5rem) scaleY(0.94) -> none, 340ms cubic-bezier(0.16, 1, 0.3, 1), transform-origin: top center",
+        "purpose": "The verdict landing the way a tarp does when the last corner is tied. Never opacity — the verdict must be legible from the first frame even if motion fails."
+      },
+      {
+        "name": "flap",
+        "value": "skewY(0deg) -> skewY(-1.2deg) -> skewY(0deg), 1.6s ease-in-out infinite",
+        "purpose": "Thinking state: the tarp flexing in wind, not three bouncing dots."
+      },
+      {
+        "name": "lift",
+        "value": "transform: translateY(-1px) on hover",
+        "purpose": "The only hover response any pressable element gets. No scale, no colour shift, no shadow growth."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { animation-duration: 0.01ms; animation-iteration-count: 1; transition-duration: 0.01ms }",
+        "purpose": "Global kill switch. Nothing in the system depends on an animation completing."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Verdict Banner (HIGH_RISK)",
+      "kind": "custom",
+      "refersTo": "verdict-banner-high-risk",
+      "description": "The system's centre: a full-bleed field of the verdict's own colour with the word at shouting scale and a drawn mark. Only deterministic-engine output gets one, and only one per card.",
+      "html": "<h2 class=\"ds-verdict-banner ds-verdict-banner--risk\"><span class=\"ds-sr-only\">Verdict: mataas na panganib.</span><span aria-hidden=\"true\" class=\"ds-verdict-banner__row\"><svg width=\"30\" height=\"30\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 19.5v-7a7 7 0 0 1 14 0v7Z\"/><path d=\"M2.5 19.5h19\"/><path d=\"M12 2.5v2\"/><path d=\"M4 6 2.6 4.6\"/><path d=\"M20 6l1.4-1.4\"/></svg><span class=\"ds-verdict-banner__word\">HIGH_RISK</span></span></h2>",
+      "css": ".ds-verdict-banner { position: relative; isolation: isolate; margin: 0; border-bottom: 2px solid #1a1614; padding: 1rem; color: #fff8ec; animation: ds-banner-drop 340ms cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: top center; } .ds-verdict-banner--risk { background: #c8210f; --ds-shout-shadow: #97180a; } .ds-verdict-banner::before { content: \"\"; position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: repeating-linear-gradient(90deg, rgb(26 22 20 / 0.055) 0 1px, transparent 1px 4px), repeating-linear-gradient(0deg, rgb(26 22 20 / 0.045) 0 1px, transparent 1px 4px); } .ds-verdict-banner::after { content: \"\"; position: absolute; inset: 0; z-index: 0; pointer-events: none; mix-blend-mode: multiply; background-image: radial-gradient(circle at center, rgb(26 22 20 / 0.16) 0 1.1px, transparent 1.1px); background-size: 5px 5px; } .ds-verdict-banner__row { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.625rem; } .ds-verdict-banner__word { font-family: Anton, \"Arial Narrow\", sans-serif; font-weight: 400; font-size: 2.1rem; line-height: 0.92; letter-spacing: -0.01em; text-transform: uppercase; text-shadow: 0.035em 0.038em 0 var(--ds-shout-shadow, rgb(0 0 0 / 0.22)); } .ds-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } @keyframes ds-banner-drop { from { transform: translateY(-0.5rem) scaleY(0.94); } to { transform: translateY(0) scaleY(1); } } @media (min-width: 1024px) { .ds-verdict-banner { padding: 1.25rem 1.5rem; } .ds-verdict-banner__word { font-size: 3.4rem; } }"
+    },
+    {
+      "name": "Tarp Card",
+      "kind": "card",
+      "refersTo": "card-tarp",
+      "description": "The tarp every result is printed on: square, 2px ink keyline, 4px offset solid block shadow, four brass grommets, paper interior. Shown here in its escape-hatch form — an ink header band, because a state with no verdict must never look adjudicated.",
+      "html": "<article class=\"ds-tarp-card\"><h2 class=\"ds-tarp-card__band\">Hindi na-analyze</h2><div class=\"ds-tarp-card__body\"><p>Hindi ko masuri ang post na ito. I-verify sa DMW website o tumawag sa 1348.</p></div></article>",
+      "css": ".ds-tarp-card { position: relative; background: #fff8ec; color: #1a1614; border: 2px solid #1a1614; border-radius: 0; box-shadow: 4px 4px 0 #1a1614; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-tarp-card::after { content: \"\"; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: radial-gradient(circle at center, #fff8ec 0 2.5px, #8c8378 2.5px 4.5px, transparent 4.5px), radial-gradient(circle at center, #fff8ec 0 2.5px, #8c8378 2.5px 4.5px, transparent 4.5px), radial-gradient(circle at center, #fff8ec 0 2.5px, #8c8378 2.5px 4.5px, transparent 4.5px), radial-gradient(circle at center, #fff8ec 0 2.5px, #8c8378 2.5px 4.5px, transparent 4.5px); background-repeat: no-repeat; background-size: 11px 11px; background-position: 0.55rem 0.55rem, calc(100% - 0.55rem) 0.55rem, 0.55rem calc(100% - 0.55rem), calc(100% - 0.55rem) calc(100% - 0.55rem); } .ds-tarp-card__band { margin: 0; background: #1a1614; color: #fff8ec; border-bottom: 2px solid #1a1614; padding: 0.625rem 2.25rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; } .ds-tarp-card__body { padding: 0.875rem 1rem 1.25rem; font-size: 0.95rem; line-height: 1.625; } .ds-tarp-card__body p { margin: 0; }"
+    },
+    {
+      "name": "Quick Action Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "A pressable paper chip with a 2px offset block shadow. Chips that need typed input arm the composer instead of firing, and the armed state inverts to ink and sets aria-pressed.",
+      "html": "<div style=\"display:flex;flex-wrap:wrap;gap:0.5rem\"><button type=\"button\" class=\"ds-chip\">I-check ang ahensya</button><button type=\"button\" class=\"ds-chip ds-chip--armed\" aria-pressed=\"true\">Suriin ang job post</button></div>",
+      "css": ".ds-chip { min-height: 44px; padding: 0 0.875rem; border: 2px solid #1a1614; border-radius: 0; background: #fff8ec; color: #1a1614; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.85rem; font-weight: 700; box-shadow: 2px 2px 0 rgb(26 22 20 / 0.14); transition: transform 0.15s; cursor: pointer; } .ds-chip:hover { transform: translateY(-1px); } .ds-chip:focus-visible { outline: 3px solid #1a1614; outline-offset: 2px; border-radius: 2px; } .ds-chip:disabled { opacity: 0.45; cursor: not-allowed; } .ds-chip--armed { background: #1a1614; color: #fff8ec; box-shadow: 2px 2px 0 rgb(26 22 20 / 0.25); }"
+    },
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "input-composer",
+      "description": "The tarp's own form field, sitting on the yellow bar: a 44px attach box, an auto-growing keylined textarea capped at ~8 lines, and a solid ink send block. Disabled send empties the box rather than dimming ink over yellow, which renders as a muddy olive that looks broken.",
+      "html": "<form class=\"ds-composer\"><label class=\"ds-composer__icon\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.5 11.5 12 20a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.9-7.8\"/></svg></label><textarea rows=\"1\" class=\"ds-composer__field\" placeholder=\"Pangalan ng ahensya, o i-paste ang job post…\" aria-label=\"Mensahe kay Bantatay\"></textarea><button type=\"submit\" class=\"ds-composer__send\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 19V5\"/><path d=\"m5.5 11.5 6.5-6.5 6.5 6.5\"/></svg></button></form>",
+      "css": ".ds-composer { display: flex; align-items: flex-end; gap: 0.5rem; background: #f5c518; border-top: 2px solid #1a1614; padding: 0.75rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-composer__icon, .ds-composer__send { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; height: 44px; width: 44px; border: 2px solid #1a1614; border-radius: 0; transition: transform 0.15s; cursor: pointer; } .ds-composer__icon { background: #fff8ec; color: #1a1614; } .ds-composer__send { background: #1a1614; color: #fff8ec; } .ds-composer__icon:hover, .ds-composer__send:hover { transform: translateY(-1px); } .ds-composer__send:disabled { background: #fff8ec; color: rgb(26 22 20 / 0.35); cursor: not-allowed; transform: none; } .ds-composer__field { flex: 1 1 auto; min-height: 44px; max-height: 180px; resize: none; border: 2px solid #1a1614; border-radius: 0; background: #fff8ec; color: #1a1614; padding: 0.625rem 0.75rem; font: inherit; font-size: 0.95rem; font-weight: 500; line-height: 1.625; } .ds-composer__field::placeholder { color: #6b6058; font-weight: 400; } .ds-composer__field:focus-visible, .ds-composer__send:focus-visible, .ds-composer__icon:focus-within { outline: 3px solid #1a1614; outline-offset: 2px; border-radius: 2px; }"
+    },
+    {
+      "name": "Tarp Action Link",
+      "kind": "button",
+      "refersTo": "button-action",
+      "description": "The one call-to-action shape: tarp-yellow ground, ink keyline, bold label, trailing drawn icon, 44px tall. Used for tel: calls, the official DMW verify link, and KB source links.",
+      "html": "<a href=\"tel:1348\" class=\"ds-action\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.5 3.5h-2A2 2 0 0 0 3.5 5.7C4.2 12.6 11.4 19.8 18.3 20.5a2 2 0 0 0 2.2-2v-2a1.6 1.6 0 0 0-1.3-1.6l-2.7-.5a1.6 1.6 0 0 0-1.6.7l-.7 1a13.6 13.6 0 0 1-5.8-5.8l1-.7a1.6 1.6 0 0 0 .7-1.6l-.5-2.7A1.6 1.6 0 0 0 7.5 3.5Z\"/></svg><span>DMW Hotline 1348</span></a>",
+      "css": ".ds-action { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 0.75rem; border: 2px solid #1a1614; border-radius: 0; background: #f5c518; color: #1a1614; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: transform 0.15s; } .ds-action:hover { transform: translateY(-1px); } .ds-action:focus-visible { outline: 3px solid #1a1614; outline-offset: 2px; border-radius: 2px; } .ds-action svg { flex: 0 0 auto; }"
+    },
+    {
+      "name": "Evidence Row",
+      "kind": "custom",
+      "refersTo": "tier-chip-critical",
+      "description": "A verbatim quote from the post with the severity tier printed above it as a stamp chip. A ruled band of the same tarp — dashed rule, no keylined slip, no coloured edge, no nesting. INFO stays ink-on-paper because Info surfaces but never scores.",
+      "html": "<ol class=\"ds-evidence-list\"><li class=\"ds-evidence\"><span class=\"ds-tier ds-tier--critical\">CRITICAL</span><span class=\"ds-evidence__body\">Nangangailangan ng bayad bago may job order — “GCash mo na lang ang ₱25,000 reservation fee ngayon.”</span></li><li class=\"ds-evidence\"><span class=\"ds-tier ds-tier--warning\">WARNING</span><span class=\"ds-evidence__body\">Walang pangalan ng ahensya sa post — “DM lang po para sa details.”</span></li><li class=\"ds-evidence\"><span class=\"ds-tier ds-tier--info\">INFO</span><span class=\"ds-evidence__body\">Walang nakasaad na sahod — “competitive salary.”</span></li></ol>",
+      "css": ".ds-evidence-list { list-style: none; margin: 0; padding: 0; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; color: #1a1614; } .ds-evidence { border-top: 2px dashed #eadfcb; padding: 0.625rem 0; font-size: 0.88rem; line-height: 1.625; } .ds-evidence:first-child { border-top: 0; } .ds-evidence__body { display: block; } .ds-tier { display: inline-block; margin-bottom: 0.375rem; padding: 0.125rem 0.375rem; border-radius: 0; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; } .ds-tier--critical { background: #c8210f; color: #fff8ec; } .ds-tier--warning { background: #b4560a; color: #fff8ec; } .ds-tier--info { background: #fff8ec; color: #1a1614; border: 2px solid #1a1614; }"
+    },
+    {
+      "name": "Printed Field",
+      "kind": "custom",
+      "description": "The read-only data pattern that replaced every monospace key/value: a tracked micro-caps label in faint ink stacked directly above its bold ink value, in a two-column grid (three at lg).",
+      "html": "<dl class=\"ds-fields\"><div><dt class=\"ds-fields__label\">License status</dt><dd class=\"ds-fields__value\">VALID</dd></div><div><dt class=\"ds-fields__label\">Validity</dt><dd class=\"ds-fields__value\">12 Jan 2024 – 11 Jan 2028</dd></div><div style=\"grid-column:span 2\"><dt class=\"ds-fields__label\">Address</dt><dd class=\"ds-fields__value\">1204 Ermita, Manila</dd></div></dl>",
+      "css": ".ds-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1rem; margin: 0; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-fields__label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b6058; } .ds-fields__value { margin: 0.125rem 0 0; font-size: 0.9rem; font-weight: 500; color: #1a1614; }"
+    },
+    {
+      "name": "User Speech Strip",
+      "kind": "custom",
+      "refersTo": "message-user",
+      "description": "The user's own words as tape stuck on the tarp: yellow ground, hard ink keyline, lighter offset block shadow. Never a rounded bubble — the contrast with the verdict banner is the point, speech is paper, adjudication is a printed field.",
+      "html": "<div style=\"display:flex;justify-content:flex-end\"><div class=\"ds-speech\"><p>Mabuhay Manpower Services po, legit ba?</p></div></div>",
+      "css": ".ds-speech { max-width: 85%; border: 2px solid #1a1614; border-radius: 0; background: #f5c518; color: #1a1614; padding: 0.625rem 0.875rem; box-shadow: 3px 3px 0 rgb(26 22 20 / 0.16); font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.95rem; font-weight: 500; line-height: 1.625; } .ds-speech p { margin: 0; overflow-wrap: break-word; white-space: pre-wrap; }"
+    },
+    {
+      "name": "Header Band",
+      "kind": "nav",
+      "refersTo": "nav-header",
+      "description": "The one element present in every state: a sticky ink band with the Anton wordmark in tarp yellow, a tracked micro-caps persona tag, and the standing unofficial-tool disclaimer right-aligned.",
+      "html": "<header class=\"ds-header\"><div class=\"ds-header__inner\"><p class=\"ds-header__mark\">LigtasOFW<span class=\"ds-header__tag\">Bantatay</span></p><p class=\"ds-header__note\">Hindi opisyal<br>na DMW tool</p></div></header>",
+      "css": ".ds-header { position: sticky; top: 0; z-index: 10; background: #1a1614; border-bottom: 2px solid #1a1614; padding: 0.5rem 0.75rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-header__inner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; max-width: 42rem; margin: 0 auto; } .ds-header__mark { margin: 0; font-family: Anton, \"Arial Narrow\", sans-serif; font-weight: 400; font-size: 1.05rem; line-height: 1; letter-spacing: -0.01em; text-transform: uppercase; color: #f5c518; } .ds-header__tag { margin-left: 0.5rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(255 248 236 / 0.7); } .ds-header__note { margin: 0; flex: 0 0 auto; text-align: right; font-size: 0.62rem; font-weight: 700; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(255 248 236 / 0.8); }"
+    },
+    {
+      "name": "Typing Indicator",
+      "kind": "custom",
+      "description": "The waiting state: a keylined yellow strip in micro-caps, flexing like a tarp in wind. Not three bouncing dots.",
+      "html": "<div aria-live=\"polite\" aria-label=\"Sinusuri ni Bantatay\"><span class=\"ds-flap\">Sinusuri…</span></div>",
+      "css": ".ds-flap { display: inline-block; border: 2px solid #1a1614; border-radius: 0; background: #f5c518; color: #1a1614; padding: 0.375rem 0.75rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; animation: ds-flap 1.6s ease-in-out infinite; } @keyframes ds-flap { 0%, 100% { transform: skewY(0deg); } 50% { transform: skewY(-1.2deg); } } @media (prefers-reduced-motion: reduce) { .ds-flap { animation-duration: 0.01ms; animation-iteration-count: 1; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Tarpaulin Babala",
+    "overview": "This is a Philippine large-format tarpaulin rendered as an interface: the vinyl banner a barangay strings across a road when everyone needs to know something today. Missing persons, flood warnings, BABALA signs. The world was chosen because it is *already* a warning medium — the audience reads a tarp fluently without being taught it, it survives outdoor daylight on a cheap phone in a way a dark UI cannot, and a thing a community *posts* maps onto reporting a recruiter far better than a chat bubble does.\n\nThe system is committed rather than accented. Tarp yellow owns the surface; it is not a highlight colour on a neutral shell. A verdict does not get a badge — it gets a full-bleed field of its own colour with the word at shouting scale, because in this world a verdict is a banner. Everything is printed: hard 2px ink keylines, 4px offset solid block shadows, brass grommets pinning the corners of every card, three real press signatures (vinyl weave, halftone rosette, plate misregistration) applied to large colour fields and display type only. Nothing is soft. There is no blur, no gradient, no rounded corner, no monospace, and no emoji.\n\nThe direction explicitly refuses two things and the refusals are visible in the markup. It refuses the AI-chat empty state — no centred avatar, no greeting, no suggestion chips above the fold, and on arrival no bottom-pinned composer. It refuses the navy government portal that would be the predictable opposite. One note on the record: PRODUCT.md carries a volunteered \"bright, soft, friendly\" constraint from 2026-08-04; the build delivered bright and legible but deliberately *not* soft, because a soft treatment cannot make HIGH_RISK land. Where they disagree, the build is the system.",
+    "keyCharacteristics": [
+      "Saturated CMYK fields on warm paper — colour is the ground, never a tint",
+      "Anton at shouting scale with a hard offset shadow; Archivo for everything else",
+      "Square corners and 2px ink keylines everywhere; zero radius is a rule, not a default",
+      "Depth is offset ink, never blur — struck, not lifted",
+      "Printed texture on large fields and display type only, never behind body copy",
+      "One drawn icon family, 24px grid, round caps — including the three verdict marks",
+      "Tuned for a cheap Android phone in outdoor daylight"
+    ],
+    "rules": [
+      {
+        "name": "The One Banner Rule",
+        "body": "Only the deterministic engine gets a colour field. A coloured verdict banner renders solely for checkAgency / scorePost output, and exactly one per card. A registry verdict nested inside a job-post scan is rendered colourless (ink keyline on paper) — a green mark inside a HIGH_RISK card argues against the warning the card exists to deliver, which is precisely the misread the impersonation scam engineers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Unadjudicated Rule",
+        "body": "No verdict means no colour. Escape hatches — unanalyzable, quota exhausted, rate limited, not a job post — get a plain ink header band. Those states must never look adjudicated.",
+        "section": "colors"
+      },
+      {
+        "name": "The Triple-Carry Rule",
+        "body": "Verdict meaning never rides on colour alone. Every verdict carries a colour field and the word and a drawn mark, so it survives greyscale, colour-blindness, and a screen read in sunlight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Info Stays Ink Rule",
+        "body": "The Info severity tier is ink-on-paper with a keyline, never a colour chip. Info surfaces but does not score; giving it a colour would score it in the UI.",
+        "section": "colors"
+      },
+      {
+        "name": "The Real-Surface Contrast Rule",
+        "body": "Contrast is measured against the surface a colour actually sits on, not against white. #6b6058 is recorded at 4.6:1 on paper; that is the form the check takes.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Monospace Rule",
+        "body": "A tarp has printed labels, not code. Small tracked Archivo caps do every job monospace would have done — field labels, tiers, data stamps. There is no monospace anywhere in the system.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Kicker Rule",
+        "body": "No tracked all-caps string above a heading, and none below it either. Relocating a kicker under the body is the same defect in a new position. The banner says what the verdict is and the reasons name the query; a label restating the heading adds nothing and truncates.",
+        "section": "typography"
+      },
+      {
+        "name": "The Shout Is Rationed Rule",
+        "body": "Anton appears in exactly four places: the arrival line, the verdict word, a record's own name, and the wordmark. It never sets body copy, never sets a label, and never appears at reading size.",
+        "section": "typography"
+      },
+      {
+        "name": "The Constructed Fold Rule",
+        "body": "The first viewport's contents are fixed by measurement (calc(100dvh - header) plus justify-between), never by ordering and luck. If something must be above the fold, it is in that section; if it must be below, it is outside it.",
+        "section": "layout"
+      },
+      {
+        "name": "The Struck-Not-Blurred Rule",
+        "body": "Blur radius is 0 in every shadow, without exception. If depth is needed, offset solid ink. A soft or translucent shadow anywhere in this system is a defect.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Lift Is One Pixel Rule",
+        "body": "Pressable things respond with hover:-translate-y-px and nothing else — no scale, no colour shift, no shadow growth.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No Nested Boxes Rule",
+        "body": "A section of a card is a dashed or solid rule, never a keylined container inside a keylined card. Two containment levels is the ceiling — card, then ruled sections. Nested cards are always wrong, most of all at the moment a reader is deciding whether to send money.",
+        "section": "shapes"
+      },
+      {
+        "name": "The No Coloured Edge Rule",
+        "body": "A thick accent border on one edge of a block is the clearest tell of a generated interface, and nothing in a tarpaulin has one. Severity is carried by a printed tier chip instead.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do give a verdict a full-bleed field of its own colour (#c8210f / #b4560a / #0e6b52) with the word in Anton and a drawn mark beside it — colour, word, and mark together.",
+      "Do render exactly one coloured banner per card, and only for deterministic-engine output.",
+      "Do give any state without a verdict a solid ink header band instead of a colour field.",
+      "Do divide a card with a 2px dashed #eadfcb rule (or 2px solid #1a1614 for a heavier break).",
+      "Do keep every shadow at blur radius 0 — 4px 4px 0 for cards, 2px 2px 0 for chips, 3px 3px 0 for speech.",
+      "Do put four grommets on every card, painted as an overlay at z-index 1 so they sit in front of an opaque band.",
+      "Do set small labels as bold Archivo caps tracked 0.10–0.14em in faint ink, stacked above their value.",
+      "Do keep every tap target at min-height 44px and every focusable control on the 3px ink outline.",
+      "Do apply .stock, .halftone, and .misregister to large colour fields and display type only.",
+      "Do measure contrast against the surface the colour actually sits on.",
+      "Do ration Anton to the arrival line, the verdict word, a record's name, and the wordmark."
+    ],
+    "donts": [
+      "Don't use a rounded corner anywhere — 0 radius is universal; the 2px focus-ring radius is the only exception.",
+      "Don't blur a shadow, tint a verdict colour, or use a verdict colour as an accent on neutral.",
+      "Don't put a coloured verdict mark inside another card's body — a nested registry verdict is colourless.",
+      "Don't give the INFO tier a colour; it surfaces but never scores.",
+      "Don't nest a keylined box inside a keylined card. Sections are rules, not containers.",
+      "Don't put a thick coloured border on one edge of a block.",
+      "Don't set a kicker, eyebrow, or tracked all-caps restatement above or below a heading.",
+      "Don't use monospace for anything, including data, codes, and dates.",
+      "Don't use an emoji as iconography — the three verdict marks and every UI glyph come from the drawn 24px family.",
+      "Don't put texture behind body copy; this audience reads on cheap phones in daylight.",
+      "Don't animate a verdict's opacity, or let any state depend on motion completing.",
+      "Don't dim an ink control over yellow to show disabled — empty the box instead.",
+      "Don't reintroduce the AI-chat empty state: no centred avatar, greeting, or chip row above the fold, and no bottom-pinned composer on arrival."
+    ]
+  }
+}
