@@ -253,6 +253,50 @@ describe("ResultCard — Job Orders (issue #5)", () => {
     expect(html).toContain("tugma sa sinabi mo");
   });
 
+  // Found on production: 1010 EPHESIANS carries 369 job orders and the registry's largest agency
+  // carries 2,816. Rendering them all produced a card roughly 460,000px tall.
+  it("caps a long Job Order list and states the real total instead of truncating silently", () => {
+    const jobOrders = Array.from({ length: 369 }, (_, i) => baseJobOrder({ id: i + 1, position: `Welder ${i + 1}` }));
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "VERIFIED",
+      reasons: ["matched exact name: XYZ International Placement Agency, Inc."],
+      syncedAt: SYNCED_AT,
+      jobOrders,
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+
+    expect(html).toContain("Welder 1");
+    expect(html).toContain("Welder 8");
+    expect(html).not.toContain("Welder 9");
+    // The total is stated, and the rest is reachable on the official site.
+    expect(html).toContain("8 sa 369");
+    expect(html).toContain("At 361 pang iba");
+  });
+
+  it("never truncates away the row the user actually asked about", () => {
+    const claimed = baseJobOrder({ id: 999, position: "Caregiver", jobsite: "Canada" });
+    const jobOrders = [
+      ...Array.from({ length: 40 }, (_, i) => baseJobOrder({ id: i + 1, position: `Welder ${i + 1}` })),
+      claimed,
+    ];
+    const result: RegistryVerdictResult = {
+      kind: "matched",
+      verdict: "VERIFIED",
+      reasons: ["matched exact name: XYZ International Placement Agency, Inc."],
+      syncedAt: SYNCED_AT,
+      jobOrders,
+      claimedMatch: claimed,
+      agency: baseAgency(),
+    };
+    const html = renderToStaticMarkup(<ResultCard result={result} />);
+
+    // Last in the raw list, but it is the one row the query was about.
+    expect(html).toContain("Caregiver");
+    expect(html).toContain("tugma sa sinabi mo");
+  });
+
   it("R13-style claim miss: rows exist but none match => CAUTION copy naming the destination", () => {
     const jobOrder = baseJobOrder({ jobsite: "Saudi Arabia", position: "Domestic Worker" });
     const result: RegistryVerdictResult = {

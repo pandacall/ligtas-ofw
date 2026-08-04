@@ -85,15 +85,39 @@ export function RegistryResultDetails({ result }: { result: RegistryVerdictResul
   );
 }
 
+/**
+ * How many Job Orders a card lists.
+ *
+ * Real agencies carry hundreds: the live registry's largest holds 2,816, and an uncapped list
+ * rendered a card roughly 460,000px tall — unusable on the phone this audience actually uses.
+ * The list is informational (Story 7) and never moves the verdict, so a sample plus an honest
+ * total serves the reader better than the whole table. Never a silent cap.
+ */
+const JOB_ORDER_LIMIT = 8;
+
 function JobOrdersSection({ jobOrders, claimedMatch }: { jobOrders: JobOrder[]; claimedMatch?: JobOrder | null }) {
+  // A claimed match is the one row the user actually asked about, so it is never truncated away.
+  const matchFirst = claimedMatch
+    ? [claimedMatch, ...jobOrders.filter((jobOrder) => jobOrder.id !== claimedMatch.id)]
+    : jobOrders;
+  const shown = matchFirst.slice(0, JOB_ORDER_LIMIT);
+  const hidden = jobOrders.length - shown.length;
+
   return (
     <section className="mt-4 border-t-2 border-dashed border-paper-edge pt-3">
-      <SectionLabel>Job Orders</SectionLabel>
+      <SectionLabel>
+        Job Orders
+        {jobOrders.length > 0 && (
+          <span className="ml-1.5 font-normal normal-case tracking-normal text-ink-soft">
+            {hidden > 0 ? `— ${shown.length} sa ${jobOrders.length}` : `— ${jobOrders.length}`}
+          </span>
+        )}
+      </SectionLabel>
       {jobOrders.length === 0 ? (
         <p className="mt-1.5 text-[0.9rem]">Walang aprubadong Job Order sa listahan.</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
-          {jobOrders.map((jobOrder) => {
+          {shown.map((jobOrder) => {
             const isClaimedMatch = claimedMatch != null && claimedMatch.id === jobOrder.id;
             return (
               <li key={jobOrder.id} className="text-[0.9rem]">
@@ -116,6 +140,20 @@ function JobOrdersSection({ jobOrders, claimedMatch }: { jobOrders: JobOrder[]; 
             );
           })}
         </ul>
+      )}
+      {hidden > 0 && (
+        <p className="mt-2 text-[0.8rem] text-ink-soft">
+          At {hidden} pang iba. Tingnan ang buong listahan sa{" "}
+          <a
+            href="https://dmw.gov.ph"
+            target="_blank"
+            rel="noreferrer"
+            className="font-bold text-ink underline decoration-2 underline-offset-2"
+          >
+            opisyal na DMW website
+          </a>
+          .
+        </p>
       )}
     </section>
   );
