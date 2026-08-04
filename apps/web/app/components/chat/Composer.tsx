@@ -9,6 +9,74 @@ const MAX_IMAGE_MB = MAX_IMAGE_BYTES / (1024 * 1024);
 export type ComposerHandle = { focus: () => void };
 
 /**
+ * Real things a user might type, cycled as a typing animation in the placeholder.
+ *
+ * A static "Pangalan ng ahensya, o i-paste ang job post…" tells someone the categories but not
+ * what a query actually looks like. These are shaped like the four things the product can do —
+ * a conversational agency question, a bare registry name, a rules question, and the
+ * after-the-fact case — so a first-timer can see the register as well as the topic.
+ */
+const EXAMPLE_QUERIES = [
+  "legit ba ang Golden Star Manpower?",
+  "1010 EPHESIANS HUMAN RESOURCES INC",
+  "magkano ang legal na placement fee?",
+  "na-scam ako, ano ang gagawin ko?",
+];
+
+const TYPE_MS = 55;
+const ERASE_MS = 28;
+const HOLD_MS = 1700;
+
+/**
+ * Types an example, holds it, erases it, moves to the next.
+ *
+ * Stops permanently the moment the user engages — focus, a keystroke, an attached image, or an
+ * armed chip — because an animating placeholder under a cursor is a distraction, not a hint.
+ * Under `prefers-reduced-motion` it renders the first example statically instead: the teaching
+ * value is in the example itself, not the motion.
+ */
+function useTypedPlaceholder(active: boolean): string {
+  const reduced =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const [shown, setShown] = useState(reduced ? EXAMPLE_QUERIES[0]! : "");
+
+  useEffect(() => {
+    if (!active || reduced) return;
+
+    let phrase = 0;
+    let chars = 0;
+    let erasing = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const step = () => {
+      const full = EXAMPLE_QUERIES[phrase]!;
+      if (!erasing) {
+        chars += 1;
+        setShown(full.slice(0, chars));
+        if (chars === full.length) {
+          erasing = true;
+          timer = setTimeout(step, HOLD_MS);
+          return;
+        }
+      } else {
+        chars -= 1;
+        setShown(full.slice(0, chars));
+        if (chars === 0) {
+          erasing = false;
+          phrase = (phrase + 1) % EXAMPLE_QUERIES.length;
+        }
+      }
+      timer = setTimeout(step, erasing ? ERASE_MS : TYPE_MS);
+    };
+
+    timer = setTimeout(step, 600);
+    return () => clearTimeout(timer);
+  }, [active, reduced]);
+
+  return shown;
+}
+
+/**
  * The input. In this world it is the tarp's own form field: a hard-keylined box on paper, with
  * a solid ink send block.
  *
@@ -28,8 +96,13 @@ export const Composer = forwardRef<ComposerHandle, {
 }>(function Composer({ onSubmit, disabled, placeholder, pendingAction, onClearAction, onTarp = false }, ref) {
   const [text, setText] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const [engaged, setEngaged] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // The demo runs only while the field is genuinely untouched and nothing else is pending.
+  const demoActive = !engaged && !text && !image && !pendingAction && !disabled;
+  const typed = useTypedPlaceholder(demoActive);
 
   useImperativeHandle(ref, () => ({ focus: () => textareaRef.current?.focus() }), []);
 
@@ -113,7 +186,10 @@ export const Composer = forwardRef<ComposerHandle, {
           rows={1}
           value={text}
           disabled={disabled}
-          placeholder={placeholder}
+          // An armed chip's own prompt always wins; otherwise the demo types real examples until
+          // the user engages, then settles on the plain hint.
+          placeholder={pendingAction ? placeholder : demoActive ? `${typed}|` : placeholder}
+          onFocus={() => setEngaged(true)}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {

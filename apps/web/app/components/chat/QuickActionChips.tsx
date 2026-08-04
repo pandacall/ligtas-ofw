@@ -39,7 +39,10 @@ export function QuickActionChips({
   armed?: QuickAction;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    // One scrollable row on narrow phones, wrapping from 640px up. At 320 these wrapped to three
+    // rows and pushed the conversation off a single screen; a horizontally scrolling suggestion
+    // row is the normal chat idiom and buys back ~100px of height.
+    <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {chips.map((chip) => {
         const isArmed = armed === chip.action;
         return (
@@ -49,7 +52,7 @@ export function QuickActionChips({
             disabled={disabled}
             aria-pressed={chip.prompt ? isArmed : undefined}
             onClick={() => onSelect(chip)}
-            className={`min-h-[44px] border-2 border-ink px-3.5 text-[0.85rem] font-bold transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-45 ${
+            className={`min-h-[44px] shrink-0 whitespace-nowrap border-2 border-ink px-3.5 text-[0.85rem] font-bold transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-45 ${
               isArmed
                 ? "bg-ink text-paper shadow-[2px_2px_0_rgba(26,22,20,0.25)]"
                 : "bg-paper text-ink shadow-[2px_2px_0_rgba(26,22,20,0.14)]"

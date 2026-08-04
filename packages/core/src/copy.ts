@@ -143,10 +143,18 @@ export const BANTATAY_NAME = "Bantatay";
 
 export const BANTATAY_TAGLINE = "Bantay mo sa recruitment, tulad ng tatay.";
 
+/**
+ * Bantatay's opening turn.
+ *
+ * Carries the not-affiliated-with-DMW disclaimer, which PRODUCT.md records as a standing legal
+ * requirement. It reads better here, in the assistant's own voice as part of introducing himself,
+ * than as a fixed label in the header chrome — but it must stay somewhere on the first screen,
+ * so this string is the disclaimer's home. Do not remove that sentence without giving it another.
+ */
 export const BANTATAY_GREETING =
-  "Kumusta! Ako si Bantatay. Puwede kong i-check kung lisensyado ng DMW ang isang recruitment agency, " +
-  "o basahin ang isang job post para hanapin ang mga senyales ng illegal recruitment.\n\n" +
-  "Ano ang maitutulong ko sa iyo ngayon?";
+  "Kumusta! Ako si Bantatay. I-check natin kung lisensyado ng DMW ang isang ahensya, o suriin ang " +
+  "job post para sa mga red flag.\n\n" +
+  "Hindi ako opisyal na tool ng DMW — i-verify pa rin sa dmw.gov.ph o Hotline 1348.";
 
 // Router Unavailable (ADR-0005): the chat routing budget is spent, or the Router failed
 // validation twice. Distinct from Quota Exhausted — the deterministic paths (the chips, the
