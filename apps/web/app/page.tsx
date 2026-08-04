@@ -1,39 +1,7 @@
-import Link from "next/link";
-import { checkAgency } from "@ligtas-ofw/core";
-import { ResultCard } from "./components/ResultCard";
-import { getRegistryState } from "../lib/registry-store";
+import { Chat } from "./components/chat/Chat";
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; destination?: string; position?: string }>;
-}) {
-  const { q, destination, position } = await searchParams;
-  const query = q?.trim();
-  const claimedDestination = destination?.trim();
-  const claimedPosition = position?.trim();
-  const claim =
-    claimedDestination && claimedPosition
-      ? { destination: claimedDestination, position: claimedPosition }
-      : undefined;
-
-  return (
-    <main>
-      <h1>LigtasOFW</h1>
-      <p>Check if a recruitment agency is DMW-licensed.</p>
-      <form>
-        <label htmlFor="q">Agency name</label>
-        <input id="q" name="q" type="text" defaultValue={query ?? ""} required />
-        <label htmlFor="destination">Claimed destination (optional)</label>
-        <input id="destination" name="destination" type="text" defaultValue={claimedDestination ?? ""} />
-        <label htmlFor="position">Claimed position (optional)</label>
-        <input id="position" name="position" type="text" defaultValue={claimedPosition ?? ""} />
-        <button type="submit">Check</button>
-      </form>
-      {query && <ResultCard result={checkAgency(query, await getRegistryState(), new Date(), claim)} />}
-      <p>
-        <Link href="/scan">Scan a job post instead</Link>
-      </p>
-    </main>
-  );
+// The chat is the whole Surface — the agency check and the job-post scan are things the
+// conversation does, not separate pages to choose between (ADR-0005).
+export default function HomePage() {
+  return <Chat />;
 }

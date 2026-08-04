@@ -1,28 +1,59 @@
-import type { JobOrder, RegistryVerdictResult, Verdict } from "@ligtas-ofw/core";
+import type { JobOrder, RegistryVerdictResult } from "@ligtas-ofw/core";
 import { formatDate } from "@ligtas-ofw/core/format";
+import { VerdictInline, VerdictStamp } from "./VerdictStamp";
 
-// Shared by ResultCard (agency-check page) and the scan page's registry section — both
-// render the identical RegistryVerdictResult shape, only the surrounding footer differs.
-export const VERDICT_LABEL: Record<Verdict, string> = {
-  VERIFIED: "✅ VERIFIED",
-  CAUTION: "⚠️ CAUTION",
-  HIGH_RISK: "🚨 HIGH_RISK",
-};
+// Shared by ResultCard (agency check) and the scan card's registry section — both render the
+// identical RegistryVerdictResult shape, only the surrounding footer differs.
+// VERDICT_LABEL now lives with the stamp that renders it; re-exported so existing importers
+// keep working.
+export { VERDICT_LABEL } from "./VerdictStamp";
 
 function formatNullableDate(date: Date | null): string {
   return date ? formatDate(date) : "—";
 }
 
-export function RegistryResultDetails({ result }: { result: RegistryVerdictResult }) {
+/** Why the engine landed where it did. Never decorative — these are the reasons. */
+function Reasons({ reasons }: { reasons: string[] }) {
+  return (
+    <ul className="mt-3 space-y-1.5 text-sm">
+      {reasons.map((reason) => (
+        <li key={reason} className="flex gap-2">
+          <span aria-hidden className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-manila-rule" />
+          <span>{reason}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A record field: mono label above mono value, the way a printed form sets them. */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-manila-ink/85">{label}</dt>
+      <dd className="mt-0.5 font-mono text-[0.8rem] text-manila-ink">{children}</dd>
+    </div>
+  );
+}
+
+/**
+ * `verdictDisplay` controls how loud this result's verdict is. A record shows exactly one
+ * stamp — its own — so a registry result nested inside a job-post scan renders "inline".
+ */
+export function RegistryResultDetails({
+  result,
+  verdictDisplay = "stamp",
+}: {
+  result: RegistryVerdictResult;
+  verdictDisplay?: "stamp" | "inline";
+}) {
+  const Verdict = verdictDisplay === "stamp" ? VerdictStamp : VerdictInline;
+
   if (result.kind === "not_found") {
     return (
       <>
-        <h2>{VERDICT_LABEL[result.verdict]}</h2>
-        <ul>
-          {result.reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
+        <Verdict verdict={result.verdict} />
+        <Reasons reasons={result.reasons} />
       </>
     );
   }
@@ -30,17 +61,20 @@ export function RegistryResultDetails({ result }: { result: RegistryVerdictResul
   if (result.kind === "ambiguous") {
     return (
       <>
-        <h2>{VERDICT_LABEL[result.verdict]}</h2>
-        <ul>
-          {result.reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
-        <ul>
-          {result.candidates.map((candidate) => (
-            <li key={candidate.id}>{candidate.name}</li>
-          ))}
-        </ul>
+        <Verdict verdict={result.verdict} />
+        <Reasons reasons={result.reasons} />
+        <div className="mt-4">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-manila-ink/85">
+            Malapit na tugma sa listahan
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            {result.candidates.map((candidate) => (
+              <li key={candidate.id} className="font-mono text-[0.8rem]">
+                {candidate.name}
+              </li>
+            ))}
+          </ul>
+        </div>
       </>
     );
   }
@@ -48,48 +82,38 @@ export function RegistryResultDetails({ result }: { result: RegistryVerdictResul
   const { agency } = result;
   return (
     <>
-      <h2>{VERDICT_LABEL[result.verdict]}</h2>
-      <h3>{agency.name}</h3>
-      <dl>
-        <dt>License Status</dt>
-        <dd>{agency.licenseStatus}</dd>
-        <dt>License validity</dt>
-        <dd>
+      <Verdict verdict={result.verdict} />
+      <h3 className="mt-4 font-display text-lg leading-snug font-bold text-manila-ink">{agency.name}</h3>
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+        <Field label="License status">{agency.licenseStatus}</Field>
+        <Field label="Validity">
           {formatNullableDate(agency.licenseStatusDate)} &ndash; {formatNullableDate(agency.licenseExpirationDate)}
-        </dd>
-        <dt>Address</dt>
-        <dd>{agency.address ?? "—"}</dd>
+        </Field>
+        <div className="col-span-2">
+          <Field label="Address">{agency.address ?? "—"}</Field>
+        </div>
       </dl>
-      <ul>
-        {result.reasons.map((reason) => (
-          <li key={reason}>{reason}</li>
-        ))}
-      </ul>
+      <Reasons reasons={result.reasons} />
       <JobOrdersSection jobOrders={result.jobOrders} claimedMatch={result.claimedMatch} />
     </>
   );
 }
 
-function JobOrdersSection({
-  jobOrders,
-  claimedMatch,
-}: {
-  jobOrders: JobOrder[];
-  claimedMatch?: JobOrder | null;
-}) {
+function JobOrdersSection({ jobOrders, claimedMatch }: { jobOrders: JobOrder[]; claimedMatch?: JobOrder | null }) {
   return (
-    <section>
-      <h4>Job Orders</h4>
+    <section className="mt-4 border-t border-manila-rule/60 pt-3">
+      <h4 className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-manila-ink/85">Job Orders</h4>
       {jobOrders.length === 0 ? (
-        <p>No approved Job Orders on file.</p>
+        <p className="mt-1.5 text-sm">No approved Job Orders on file.</p>
       ) : (
-        <ul>
+        <ul className="mt-1.5 space-y-1.5">
           {jobOrders.map((jobOrder) => {
             const isClaimedMatch = claimedMatch != null && claimedMatch.id === jobOrder.id;
             return (
-              <li key={jobOrder.id}>
-                {jobOrder.position} &mdash; {jobOrder.jobsite} (principal: {jobOrder.principal})
-                {isClaimedMatch && " ✅ matches your claim"}
+              <li key={jobOrder.id} className="text-sm">
+                <span className="font-semibold">{jobOrder.position}</span> &mdash; {jobOrder.jobsite}{" "}
+                <span className="text-manila-ink/85">(principal: {jobOrder.principal})</span>
+                {isClaimedMatch && <span className="ml-1 font-semibold text-verified">✅ matches your claim</span>}
               </li>
             );
           })}

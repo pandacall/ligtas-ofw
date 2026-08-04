@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/*
+ * LigtasOFW / Bantatay design tokens.
+ *
+ * Direction: the conversation is warm and human; the verdicts are documents. Chat is soft
+ * and spoken; a verdict arrives as a stamped record card on manila stock. That contrast is
+ * the point — it shows, in the layout itself, that the assistant talks while a deterministic
+ * engine adjudicates.
+ *
+ * Materials come from the subject's world rather than from a palette generator: manila
+ * folder stock (the paper named after Manila, where DMW files live) and narra, the
+ * Philippine hardwood, for the persona. Narra is deliberately not red, amber, or green so
+ * the brand voice can never be confused with a verdict.
+ */
+@theme {
+  /* Ground — a cool pale green-grey, kept clearly apart from the manila document stock. */
+  --color-surface: #eef1ee;
+  --color-surface-raised: #f7f9f7;
+  --color-ink: #1b2420;
+  --color-ink-soft: #4c5a54;
+  /* 4.8:1 on --color-surface. The obvious lighter grey measured 3.2:1, which fails for
+     placeholder and caption text — and this audience reads outdoors on cheap screens. */
+  --color-ink-faint: #5f6c67;
+  --color-hairline: #d3dbd6;
+
+  /* Manila — the document material. Only verdict/record cards use it. */
+  --color-manila: #e8d2a6;
+  --color-manila-deep: #dcc08d;
+  --color-manila-rule: #b8935a;
+  --color-manila-ink: #4a3a1e;
+
+  /* Narra — the persona. Bantatay's voice, avatar, and the send control. */
+  --color-narra: #6b3a2a;
+  --color-narra-soft: #f3e7e2;
+  --color-narra-bright: #94513c;
+
+  /* Verdict semantics. Never carried by colour alone — the emoji + word always ride along.
+     These are tuned against manila, not against white: the stamp sits on the record, and the
+     lighter first pass measured 4.3:1 (verified) and 3.0:1 (caution) there. A verdict is the
+     one string on the page a user must be able to read. */
+  --color-verified: #275b43;
+  --color-verified-wash: #e6efe9;
+  --color-caution: #7a4a0f;
+  --color-caution-wash: #f7eeda;
+  --color-risk: #a62b22;
+  --color-risk-wash: #f8e6e3;
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Taglish runs long; a slightly open measure keeps it readable on small screens. */
+    line-height: 1.6;
+  }
+
+  /* A visible, high-contrast focus ring everywhere — many users are on cheap screens in
+     bright daylight, where a subtle ring disappears. */
+  :focus-visible {
+    outline: 2px solid var(--color-narra);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /*
+   * The signature element: a verdict struck across the record like a rubber stamp. Slightly
+   * rotated and letterspaced, with a doubled border for the inked-edge feel. This is the one
+   * loud gesture in the design — everything around it stays quiet.
+   */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.85rem;
+    border: 2px solid currentColor;
+    box-shadow: inset 0 0 0 1px currentColor;
+    border-radius: 3px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transform: rotate(-2.5deg);
+    transform-origin: left center;
+    /*
+     * The one authored moment: the stamp lands. Exponential ease-out, no overshoot — a press
+     * decelerates into the paper, it does not spring back off it.
+     *
+     * Scale only, never opacity. The verdict is the single string on this page a user must
+     * be able to read, so its resting state is fully visible and the animation can only ever
+     * be a flourish on top of something already legible.
+     */
+    animation: stamp-press 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes stamp-press {
+    from {
+      transform: rotate(-2.5deg) scale(1.28);
+    }
+    to {
+      transform: rotate(-2.5deg) scale(1);
+    }
+  }
+
+  /* Thinking dots: a travelling dim, not a cartoon bounce. */
+  .thinking-dot {
+    animation: thinking 1.15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  @keyframes thinking {
+    0%,
+    60%,
+    100% {
+      opacity: 0.28;
+    }
+    30% {
+      opacity: 1;
+    }
+  }
+
+  /*
+   * Document stock. Square-ish corners on purpose — records don't have soft edges, and this
+   * is the committed world's one deliberate departure from the 12–16px card radius.
+   * Elevation is declared once, as a border. No shadow underneath it.
+   */
+  .record {
+    background-color: var(--color-manila);
+    border: 1px solid var(--color-manila-rule);
+    border-radius: 4px;
+    color: var(--color-manila-ink);
+  }
+
+  /* The double rule under a record's header line, straight off a paper form. */
+  .record-rule {
+    border-bottom: 3px double var(--color-manila-rule);
+  }
+
+  /*
+   * A finding on the record: a paper-white excerpt band carrying the verbatim evidence.
+   * A wash and a hairline rather than a thick coloured edge — the excerpt should read as a
+   * photocopied strip, not as a framework alert.
+   */
+  .evidence {
+    background-color: rgb(255 253 246 / 0.72);
+    border: 1px solid rgb(184 147 90 / 0.35);
+    border-radius: 3px;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+}
