@@ -11,13 +11,18 @@ type Db = ReturnType<typeof createDbClient>;
 
 export async function countScanEvents(
   db: Db,
-  scope: { ip?: string },
+  scope: { ip?: string; kind?: string },
   since: Date,
   now: Date,
 ): Promise<number> {
   const conditions = [gte(scanQuotaEvents.createdAt, since), lte(scanQuotaEvents.createdAt, now)];
   if (scope.ip !== undefined) {
     conditions.push(eq(scanQuotaEvents.ip, scope.ip));
+  }
+  // Omitting kind counts every event type — kept so an unscoped caller still behaves as it
+  // did before the chat Surface added a second budget (ADR-0005).
+  if (scope.kind !== undefined) {
+    conditions.push(eq(scanQuotaEvents.kind, scope.kind));
   }
   const rows = await db
     .select({ value: count() })
@@ -26,8 +31,8 @@ export async function countScanEvents(
   return Number(rows[0]?.value ?? 0);
 }
 
-export async function recordScanEvent(db: Db, ip: string, now: Date): Promise<void> {
-  await db.insert(scanQuotaEvents).values({ ip, createdAt: now });
+export async function recordScanEvent(db: Db, ip: string, now: Date, kind = "scan"): Promise<void> {
+  await db.insert(scanQuotaEvents).values({ ip, kind, createdAt: now });
 }
 
 // Test-only: clears the table between integration-test cases (quota-store.test.ts).

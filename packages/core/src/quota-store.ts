@@ -9,6 +9,6 @@ import type { QuotaStore } from "./quota";
 export function createPostgresQuotaStore(db: ReturnType<typeof createDbClient>): QuotaStore {
   return {
     countSince: (scope, since, now) => countScanEvents(db, scope, since, now),
-    record: (ip, now) => recordScanEvent(db, ip, now),
+    record: (ip, now, kind) => recordScanEvent(db, ip, now, kind),
   };
 }

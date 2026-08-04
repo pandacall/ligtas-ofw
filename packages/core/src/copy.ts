@@ -123,6 +123,31 @@ export const QUOTA_EXHAUSTED_COPY =
 export const RATE_LIMITED_COPY =
   "Sobra-sobra ang mga scan request mula sa iyo sa maikling panahon — sandaling maghintay at subukan ulit.";
 
+// ---------- Chat Surface copy (ADR-0005) ----------
+
+export const BANTATAY_NAME = "Bantatay";
+
+export const BANTATAY_TAGLINE = "Bantay mo sa recruitment, tulad ng tatay.";
+
+export const BANTATAY_GREETING =
+  "Kumusta! Ako si Bantatay. Puwede kong i-check kung lisensyado ng DMW ang isang recruitment agency, " +
+  "o basahin ang isang job post para hanapin ang mga senyales ng illegal recruitment.\n\n" +
+  "Ano ang maitutulong ko sa iyo ngayon?";
+
+// Router Unavailable (ADR-0005): the chat routing budget is spent, or the Router failed
+// validation twice. Distinct from Quota Exhausted — the deterministic paths (the chips, the
+// Agency check, the keyword-matched advice) all still work with zero LLM calls, so the copy
+// points at those instead of telling the user to come back tomorrow. Never a guessed intent.
+export const ROUTER_UNAVAILABLE_COPY =
+  "Pasensya na, hindi ko maintindihan ang mensahe mo ngayon. Puwede mong subukan ang mga button sa ibaba, " +
+  "o ipadala ang pangalan ng ahensya para i-check ko ito sa listahan ng DMW.";
+
+// An advice turn is only ever rendered from Advisor KB entries, so a turn with nothing to
+// cite says so plainly rather than improvising an answer.
+export const NO_KB_MATCH_COPY =
+  "Wala akong tiyak na sagot diyan. Para sa mga tanong tungkol sa illegal recruitment, tumawag sa DMW Hotline 1348 " +
+  "o bisitahin ang opisyal na DMW website.";
+
 // A valid-format claimed license is never presented as reassurance (verdict-cases.md's
 // Copy rules, quoted verbatim) — a valid format is trivially forgeable and never counts
 // toward VERIFIED, so its copy stays deflationary.

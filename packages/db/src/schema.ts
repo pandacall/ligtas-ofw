@@ -72,20 +72,29 @@ export const syncMetadata = pgTable("sync_metadata", {
 export type SyncMetadataRow = typeof syncMetadata.$inferSelect;
 export type NewSyncMetadataRow = typeof syncMetadata.$inferInsert;
 
-// One row per consumed scan attempt (issue #11). Both the per-IP sliding-window rate
-// limit and the global daily scan budget are derived by counting rows in this log over
+// One row per consumed LLM attempt (issue #11). Both the per-IP sliding-window rate
+// limit and the global daily budget are derived by counting rows in this log over
 // different windows — see packages/core/src/quota.ts — rather than kept as separate
 // counters, so there is nothing to explicitly reset at day boundaries.
+//
+// `kind` separates the two LLM roles (ADR-0005): 'scan' is a vision extraction, 'chat' is a
+// text routing call. They are metered against different budgets because they cost wildly
+// different amounts, and because exhausting the cheap one must not disable the expensive
+// one (or vice versa). Defaults to 'scan' so rows written before the chat Surface existed
+// stay correctly attributed.
 export const scanQuotaEvents = pgTable(
   "scan_quota_events",
   {
     id: serial("id").primaryKey(),
     ip: text("ip").notNull(),
+    kind: text("kind").notNull().default("scan"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   },
   (table) => ({
     createdAtIdx: index("scan_quota_events_created_at_idx").on(table.createdAt),
     ipCreatedAtIdx: index("scan_quota_events_ip_created_at_idx").on(table.ip, table.createdAt),
+    // The daily-budget query filters on kind + createdAt; the per-IP window adds ip.
+    kindCreatedAtIdx: index("scan_quota_events_kind_created_at_idx").on(table.kind, table.createdAt),
   }),
 );
 export type ScanQuotaEvent = typeof scanQuotaEvents.$inferSelect;

@@ -1,0 +1,2 @@
+ALTER TABLE "scan_quota_events" ADD COLUMN "kind" text DEFAULT 'scan' NOT NULL;--> statement-breakpoint
+CREATE INDEX "scan_quota_events_kind_created_at_idx" ON "scan_quota_events" USING btree ("kind","created_at");

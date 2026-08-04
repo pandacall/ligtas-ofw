@@ -22,6 +22,13 @@
       "when": 1785125141828,
       "tag": "0002_lush_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785807762791,
+      "tag": "0003_far_black_queen",
+      "breakpoints": true
     }
   ]
 }

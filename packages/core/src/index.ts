@@ -27,9 +27,26 @@ export type { JobOrder } from "@ligtas-ofw/db";
 export { createDbClient } from "@ligtas-ofw/db";
 export type { ExtractorClient, ExtractorMessage, ExtractorContentPart, ScanInput, ScanResult } from "./scan";
 export { scanPost, runExtractor } from "./scan";
-export type { QuotaConfig, QuotaStore, QuotaCheckResult } from "./quota";
+export type { QuotaConfig, QuotaStore, QuotaCheckResult, QuotaKind, QuotaScope } from "./quota";
 export { checkAndConsumeQuota } from "./quota";
 export { createPostgresQuotaStore } from "./quota-store";
+// Chat Surface (ADR-0005): the Advisor KB, the Router schema/guards, the deterministic
+// pre-router, and the turn orchestrator.
+export type { KbEntry } from "./advisor-kb";
+export { ADVISOR_KB, kbEntryById, matchKbEntries, resolveKbIds } from "./advisor-kb";
+export type { ChatIntent, ChatRoute, RouterClient, RouterMessage, SafeRoute } from "./chat-route";
+export {
+  ChatRoute as ChatRouteSchema,
+  FALLBACK_REPLY,
+  MAX_REPLY_LENGTH,
+  ROUTER_SYSTEM_PROMPT,
+  replyIsSafe,
+  toSafeRoute,
+} from "./chat-route";
+export type { ChatTurnInput, QuickAction, RouteDecision } from "./router";
+export { SCAN_TEXT_CHARS, routeTurn } from "./router";
+export type { ChatTurnDeps, ChatTurnResult } from "./chat";
+export { handleTurn, runRouter } from "./chat";
 export {
   FLAG_COPY,
   VERDICT_BANNER,
@@ -38,6 +55,11 @@ export {
   LICENSE_FORMAT_NEUTRAL_COPY,
   QUOTA_EXHAUSTED_COPY,
   RATE_LIMITED_COPY,
+  BANTATAY_NAME,
+  BANTATAY_TAGLINE,
+  BANTATAY_GREETING,
+  ROUTER_UNAVAILABLE_COPY,
+  NO_KB_MATCH_COPY,
 } from "./copy";
 export type { FlagCopyTemplate } from "./copy";
 export type {
